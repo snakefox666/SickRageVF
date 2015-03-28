@@ -120,7 +120,7 @@ BRANCH = ''
 
 GIT_RESET = False
 GIT_REMOTE = ''
-GIT_REMOTE_URL = ''
+GIT_REMOTE_URL = 'https://github.com/sarakha63/SickRageVF.git'
 CUR_COMMIT_BRANCH = ''
 GIT_ORG = 'sarakha63'
 GIT_REPO = 'SickRageVF'
@@ -622,11 +622,11 @@ def initialize(consoleLogging=True):
         logger.initLogging(consoleLogging=consoleLogging, fileLogging=fileLogging, debugLogging=DEBUG)
 
         # github api
-        try:
-            gh = Github(user_agent="SiCKRAGEVF").get_organization(GIT_ORG).get_repo(GIT_REPO)
-        except Exception as e:
-            gh = None
-            logger.log('Unable to setup github properly, github will not be available. Error: {0}'.format(ex(e)),logger.WARNING)
+        #try:
+        #    gh = Github(user_agent="SiCKRAGE").get_organization(GIT_ORG).get_repo(GIT_REPO)
+        #except Exception as e:
+        #    gh = None
+        #    logger.log('Unable to setup github properly, github will not be available. Error: {0}'.format(ex(e)),logger.WARNING)
 
         # git reset on update
         GIT_RESET = bool(check_setting_int(CFG, 'General', 'git_reset', 0))

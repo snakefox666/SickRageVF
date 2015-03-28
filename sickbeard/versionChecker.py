@@ -48,8 +48,8 @@ class CheckVersion():
     """
 
     def __init__(self):
-        self.updater = None
-        self.install_type = None        
+        self.updater = GitUpdateManager()
+        self.install_type = 'git'        
 
         if sickbeard.gh:
             self.install_type = self.find_install_type()
@@ -191,7 +191,7 @@ class CheckVersion():
 
     def getDBcompare(self, branchDest):
         try:
-            response = requests.get("https://raw.githubusercontent.com/sarakha63/SickRageVF/" + str(branchDest) +"/sickbeard/databases/mainDB.py", verify=False)
+            response = requests.get("https://raw.githubusercontent.com/SICKRAGETV/SickRage/" + str(branchDest) +"/sickbeard/databases/mainDB.py", verify=False)
             response.raise_for_status()
             match = re.search(r"MAX_DB_VERSION\s=\s(?P<version>\d{2,3})",response.text)
             branchDestDBversion = int(match.group('version'))
@@ -237,7 +237,7 @@ class CheckVersion():
         force: if true the VERSION_NOTIFY setting will be ignored and a check will be forced
         """
 
-        if not self.updater or not sickbeard.VERSION_NOTIFY and not sickbeard.AUTO_UPDATE and not force:
+        if (not self.updater or not sickbeard.VERSION_NOTIFY and not sickbeard.AUTO_UPDATE) and not force:
             logger.log(u"Version checking is disabled, not checking for the newest version")
             return False
 
