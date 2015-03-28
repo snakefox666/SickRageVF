@@ -623,7 +623,7 @@ def initialize(consoleLogging=True):
 
         # github api
         try:
-            gh = Github(user_agent="SiCKRAGE").get_organization(GIT_ORG).get_repo(GIT_REPO)
+            gh = Github(user_agent="SiCKRAGEVF").get_organization(GIT_ORG).get_repo(GIT_REPO)
         except Exception as e:
             gh = None
             logger.log('Unable to setup github properly, github will not be available. Error: {0}'.format(ex(e)),logger.WARNING)
@@ -721,7 +721,7 @@ def initialize(consoleLogging=True):
         if not WEB_COOKIE_SECRET:
             WEB_COOKIE_SECRET = helpers.generateCookieSecret()
 
-        INDEXER_DEFAULT_LANGUAGE = check_setting_str(CFG, 'General', 'indexerDefaultLang', 'en')
+        INDEXER_DEFAULT_LANGUAGE = check_setting_str(CFG, 'General', 'indexerDefaultLang', 'fr')
 
         LAUNCH_BROWSER = bool(check_setting_int(CFG, 'General', 'launch_browser', 1))
 
