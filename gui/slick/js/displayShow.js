@@ -42,6 +42,26 @@ $(document).ready(function () {
         window.location.href = url
 
     });
+    
+    $('#changeAudio').click(function(){
+        var sbRoot = $('#sbRoot').val()
+        var epArr = new Array()
+
+        $('.epCheck').each(function() {
+      
+            if (this.checked == true) {
+                epArr.push($(this).attr('id'))
+            }
+
+        });  
+
+        if (epArr.length == 0)
+            return false
+
+        url = sbRoot+'/home/setAudio?show='+$('#showID').attr('value')+'&eps='+epArr.join('|')+'&audio_langs='+$('#audioSelect').val();
+        window.location.href = url
+
+    });
 
     $('.seasonCheck').click(function () {
         var seasCheck = this;
@@ -259,13 +279,5 @@ $(document).ready(function () {
             sceneAbsolute = m[1];
         }
         setAbsoluteSceneNumbering(forAbsolute, sceneAbsolute);
-    });
-
-    $('.jwvideo').each(function () {
-        jwplayer(this.id).setup({
-            file: $(this).attr("id"),
-            width:120,
-            height:120
-        });
     });
 });

@@ -29,7 +29,7 @@ import sickbeard
 import requests
 
 from sickbeard import helpers, classes, logger, db
-from sickbeard.common import MULTI_EP_RESULT, SEASON_RESULT, USER_AGENT
+from sickbeard.common import MULTI_EP_RESULT, SEASON_RESULT, USER_AGENT, showLanguages
 from sickbeard import tvcache
 from sickbeard import encodingKludge as ek
 from sickbeard.exceptions import ex
@@ -56,6 +56,8 @@ class GenericProvider:
         self.show = None
 
         self.supportsBacklog = False
+        
+        self.supportsFrench = False
         self.supportsAbsoluteNumbering = False
         self.anime_only = False
 
@@ -148,7 +150,7 @@ class GenericProvider:
                 torrent_hash = re.findall('urn:btih:([\w]{32,40})', result.url)[0].upper()
 
                 if len(torrent_hash) == 32:
-                    torrent_hash = b16encode(b32decode(torrent_hash)).lower()
+                    torrent_hash = b16encode(b32decode(torrent_hash)).upper()
 
                 if not torrent_hash:
                     logger.log("Unable to extract torrent hash from link: " + ex(result.url), logger.ERROR)
@@ -156,8 +158,8 @@ class GenericProvider:
 
                 urls = [
                     'http://torcache.net/torrent/' + torrent_hash + '.torrent',
-                    'http://torrage.com/torrent/' + torrent_hash + '.torrent',
-                    'http://zoink.it/torrent/' + torrent_hash + '.torrent',
+                    'http://zoink.ch/torrent/' + torrent_hash + '.torrent',
+                    'http://torrage.com/torrent/' + torrent_hash.lower() + '.torrent',
                 ]
             except:
                 urls = [result.url]
@@ -316,7 +318,7 @@ class GenericProvider:
         # filter results
         cl = []
         for item in itemList:
-            (title, url) = self._get_title_and_url(item)
+            (title, url, lang) = self._get_title_and_url(item)
 
             # parse the file name
             try:
@@ -328,7 +330,7 @@ class GenericProvider:
             except InvalidShowException:
                 logger.log(u"Unable to parse the filename " + title + " into a valid show", logger.DEBUG)
                 continue
-
+            
             showObj = parse_result.show
             quality = parse_result.quality
             release_group = parse_result.release_group
@@ -413,6 +415,9 @@ class GenericProvider:
                         quality], logger.DEBUG)
 
                 continue
+            if not lang == showObj.audio_lang:
+                    logger.log(u"Ignoring result "+title+" because the language: " + showLanguages[lang] + " does not match the desired language: " + showLanguages[showObj.audio_lang])
+                    continue
 
             logger.log(u"Found result " + title + " at " + url, logger.DEBUG)
 
@@ -429,6 +434,12 @@ class GenericProvider:
             result.release_group = release_group
             result.version = version
             result.content = None
+            
+            if lang != "":
+                result.audio_lang=lang
+
+            else:
+                result.audio_lang='en'
 
             if len(epObj) == 1:
                 epNum = epObj[0].episode

@@ -47,6 +47,8 @@ class AlphaRatioProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "AlphaRatio")
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.enabled = False
         self.username = None

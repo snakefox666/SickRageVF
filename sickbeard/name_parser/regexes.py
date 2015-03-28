@@ -18,6 +18,8 @@
 
 # all regexes are case insensitive
 
+from sickbeard.common import showLanguages
+
 normal_regexes = [
     ('standard_repeat',
      # Show.Name.S01E02.S01E03.Source.Quality.Etc-Group
@@ -395,6 +397,13 @@ anime_regexes = [
      '''
     ),
 
+    ('anime_WarB3asT',
+     # 003. Show Name - Ep Name.ext
+     # 003-004. Show Name - Ep Name.ext
+     '''
+     ^(?P<ep_ab_num>\d{3,4})(-(?P<extra_ab_ep_num>\d{3,4}))?\.\s+(?P<series_name>.+?)\s-\s.*
+     '''),
+
     ('anime_bare',
      # One Piece - 102
      # [ACX]_Wolf's_Spirit_001.mkv
@@ -407,3 +416,8 @@ anime_regexes = [
      .*?                                                         # Separator and EOL
      ''')
 ]
+
+language_regexes = {}
+
+for k,v in showLanguages.iteritems():
+    language_regexes[k] = '(^|\w|[. _-])*('+v+')(([. _-])(dubbed))?\w*([. _-]|$)'

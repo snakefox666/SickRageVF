@@ -37,6 +37,8 @@ class animenzb(generic.NZBProvider):
         generic.NZBProvider.__init__(self, "AnimeNZB")
 
         self.supportsBacklog = False
+        
+        self.supportsFrench = False
         self.supportsAbsoluteNumbering = True
         self.anime_only = True
 

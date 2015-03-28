@@ -52,6 +52,8 @@ class BitSoupProvider(generic.TorrentProvider):
         self.url = self.urls['base_url']
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
         self.enabled = False
         self.username = None
         self.password = None

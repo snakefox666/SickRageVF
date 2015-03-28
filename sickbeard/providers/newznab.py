@@ -64,6 +64,8 @@ class NewznabProvider(generic.NZBProvider):
 
         self.enabled = True
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.default = False
 

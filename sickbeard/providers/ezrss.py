@@ -43,6 +43,8 @@ class EZRSSProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "EZRSS")
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
         self.enabled = False
         self.ratio = None
 

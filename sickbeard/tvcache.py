@@ -360,7 +360,14 @@ class TVCache():
                 logger.log(u"Skipping " + curResult["name"] + " because we don't want an episode that's " +
                            Quality.qualityStrings[curQuality], logger.DEBUG)
                 continue
-
+            try:
+                fp = NameParser()
+                parse_result = fp.parse(curResult["name"])
+            except InvalidNameException:
+                logger.log(u"Unable to parse the filename "+curResult["name"]+" into a valid episode", logger.WARNING)
+                
+            if not parse_result.audio_langs == showObj.audio_lang:
+                continue
             epObj = showObj.getEpisode(curSeason, curEp)
 
             # build a result object
@@ -374,6 +381,7 @@ class TVCache():
             result.url = url
             result.name = title
             result.quality = curQuality
+            result.audio_lang = str(showObj.audio_lang)
             result.release_group = curReleaseGroup
             result.version = curVersion
             result.content = None

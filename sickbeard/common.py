@@ -359,4 +359,11 @@ countryList = {'Australia': 'AU',
                'Canada': 'CA',
                'USA': 'US'
 }
+showLanguages = {'en':'english',
+                 'fr':'french',
+                 '':'unknown'
+                 }
 
+languageShortCode = {'english':'en',
+                     'french':'fr'
+                     }

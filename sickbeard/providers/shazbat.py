@@ -36,6 +36,8 @@ class ShazbatProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "Shazbat.tv")
 
         self.supportsBacklog = False
+        
+        self.supportsFrench = False
 
         self.enabled = False
         self.passkey = None

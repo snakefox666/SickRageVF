@@ -27,7 +27,7 @@ from sickbeard import encodingKludge as ek
 from sickbeard.name_parser.parser import NameParser, InvalidNameException, InvalidShowException
 
 MIN_DB_VERSION = 9  # oldest db version we support migrating from
-MAX_DB_VERSION = 42
+MAX_DB_VERSION = 43
 
 class MainSanityCheck(db.DBSanityCheck):
     def check(self):
@@ -973,4 +973,39 @@ class AlterTVShowsFieldTypes(AddDefaultEpStatusToTvShows):
         self.connection.action("INSERT INTO tv_shows SELECT * FROM tmp_tv_shows")
         self.connection.action("DROP TABLE tmp_tv_shows")
 
+        self.incDBVersion()
+        
+class AddFrenchSearch(AlterTVShowsFieldTypes):
+    def test(self):
+        return self.checkDBVersion() >= 43
+
+    def execute(self):
+        backupDatabase(43)
+        
+        logger.log(u"Adding french search in tv_shows")
+        self.addColumn("tv_shows", "frenchsearch", "NUMERIC", "0")
+        
+        self.incDBVersion()
+     
+class AddAudioLang(AddFrenchSearch):
+    def test(self):
+        return self.checkDBVersion() >= 44
+
+    def execute(self):
+        backupDatabase(44)
+        
+        logger.log(u"Adding audiolang to tvshow")
+        self.addColumn("tv_shows", "audio_lang", "TEXT", "fr")
+        
+        self.incDBVersion()
+        
+class AddShowLangsToEpisode(AddAudioLang):
+    def test(self):
+        return self.checkDBVersion() >= 45
+    def execute(self):
+        backupDatabase(45)
+        
+        logger.log(u"Adding showlangs to episode")
+        self.addColumn("tv_episodes", "audio_langs", "TEXT", "")
+    
         self.incDBVersion()

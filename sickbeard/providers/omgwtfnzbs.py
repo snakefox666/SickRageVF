@@ -52,6 +52,8 @@ class OmgwtfnzbsProvider(generic.NZBProvider):
         self.url = self.urls['base_url']
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
     def isEnabled(self):
         return self.enabled

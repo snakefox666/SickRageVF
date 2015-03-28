@@ -46,6 +46,8 @@ class RarbgProvider(generic.TorrentProvider):
         self.enabled = False
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.ratio = None
 

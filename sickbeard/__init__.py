@@ -38,7 +38,7 @@ from sickbeard import providers, metadata, config, webserveInit
 from sickbeard.providers.generic import GenericProvider
 from providers import ezrss, btn, newznab, womble, thepiratebay, oldpiratebay, torrentleech, kat, iptorrents, \
     omgwtfnzbs, scc, hdtorrents, torrentday, hdbits, hounddawgs, nextgen, speedcd, nyaatorrents, animenzb, torrentbytes, animezb, \
-    freshontv, morethantv, bitsoup, t411, tokyotoshokan, shazbat, rarbg, alpharatio, tntvillage, binsearch
+    freshontv, morethantv, bitsoup, t411, tokyotoshokan, shazbat, rarbg, alpharatio, tntvillage, binsearch, eztv
 from sickbeard.config import CheckSection, check_setting_int, check_setting_str, check_setting_float, ConfigMigrator, \
     naming_ep_type
 from sickbeard import searchBacklog, showUpdater, versionChecker, properFinder, autoPostProcesser, \
@@ -100,6 +100,7 @@ properFinderScheduler = None
 autoPostProcesserScheduler = None
 subtitlesFinderScheduler = None
 traktCheckerScheduler = None
+traktRollingScheduler = None
 
 showList = None
 loadingShowList = None
@@ -121,8 +122,8 @@ GIT_RESET = False
 GIT_REMOTE = ''
 GIT_REMOTE_URL = ''
 CUR_COMMIT_BRANCH = ''
-GIT_ORG = 'SiCKRAGETV'
-GIT_REPO = 'SickRage'
+GIT_ORG = 'sarakha63'
+GIT_REPO = 'SickRageVF'
 GIT_USERNAME = None
 GIT_PASSWORD = None
 GIT_PATH = None
@@ -148,8 +149,6 @@ WEB_HOST = None
 WEB_IPV6 = None
 WEB_COOKIE_SECRET = None
 
-PLAY_VIDEOS = False
-
 DOWNLOAD_URL = None
 
 HANDLE_REVERSE_PROXY = False
@@ -169,6 +168,7 @@ ENABLE_HTTPS = False
 HTTPS_CERT = None
 HTTPS_KEY = None
 
+INDEXER_DEFAULT_LANGUAGE = None
 LAUNCH_BROWSER = False
 CACHE_DIR = None
 ACTUAL_CACHE_DIR = None
@@ -192,6 +192,7 @@ METADATA_MEDE8ER = None
 QUALITY_DEFAULT = None
 STATUS_DEFAULT = None
 FLATTEN_FOLDERS_DEFAULT = False
+AUDIO_SHOW_DEFAULT = None
 SUBTITLES_DEFAULT = False
 INDEXER_DEFAULT = None
 INDEXER_TIMEOUT = None
@@ -423,6 +424,11 @@ TRAKT_DEFAULT_INDEXER = None
 TRAKT_DISABLE_SSL_VERIFY = False
 TRAKT_TIMEOUT = 60
 TRAKT_BLACKLIST_NAME = ''
+TRAKT_USE_ROLLING_DOWNLOAD = 0
+TRAKT_ROLLING_NUM_EP = 0
+TRAKT_ROLLING_ADD_PAUSED = 1
+TRAKT_ROLLING_FREQUENCY = 15
+TRAKT_ROLLING_DEFAULT_WATCHED_STATUS = 7
 
 USE_PYTIVO = False
 PYTIVO_NOTIFY_ONSNATCH = False
@@ -490,6 +496,7 @@ SUBTITLES_DIR = ''
 SUBTITLES_SERVICES_LIST = []
 SUBTITLES_SERVICES_ENABLED = []
 SUBTITLES_HISTORY = False
+EMBEDDED_SUBTITLES_ALL = False
 SUBTITLES_FINDER_FREQUENCY = 1
 SUBTITLES_MULTI = False
 
@@ -498,7 +505,7 @@ DELETE_FAILED = False
 
 EXTRA_SCRIPTS = []
 
-IGNORE_WORDS = "german,french,core2hd,dutch,swedish,reenc,MrLss"
+IGNORE_WORDS = "german,core2hd,dutch,swedish,reenc,MrLss"
 REQUIRE_WORDS = ""
 SYNC_FILES = "!sync,lftp-pget-status,part,bts"
 
@@ -527,12 +534,12 @@ def initialize(consoleLogging=True):
             TORRENT_USERNAME, TORRENT_PASSWORD, TORRENT_HOST, TORRENT_PATH, TORRENT_SEED_TIME, TORRENT_PAUSED, TORRENT_HIGH_BANDWIDTH, TORRENT_LABEL, TORRENT_LABEL_ANIME, TORRENT_VERIFY_CERT, TORRENT_RPCURL, TORRENT_AUTH_TYPE, \
             USE_KODI, KODI_ALWAYS_ON, KODI_NOTIFY_ONSNATCH, KODI_NOTIFY_ONDOWNLOAD, KODI_NOTIFY_ONSUBTITLEDOWNLOAD, KODI_UPDATE_FULL, KODI_UPDATE_ONLYFIRST, \
             KODI_UPDATE_LIBRARY, KODI_HOST, KODI_USERNAME, KODI_PASSWORD, BACKLOG_FREQUENCY, \
-            USE_TRAKT, TRAKT_USERNAME, TRAKT_PASSWORD, TRAKT_REMOVE_WATCHLIST, TRAKT_SYNC_WATCHLIST, TRAKT_METHOD_ADD, TRAKT_START_PAUSED, traktCheckerScheduler, TRAKT_USE_RECOMMENDED, TRAKT_SYNC, TRAKT_DEFAULT_INDEXER, TRAKT_REMOVE_SERIESLIST, TRAKT_DISABLE_SSL_VERIFY, TRAKT_TIMEOUT, TRAKT_BLACKLIST_NAME, \
+            USE_TRAKT, TRAKT_USERNAME, TRAKT_PASSWORD, TRAKT_REMOVE_WATCHLIST, TRAKT_SYNC_WATCHLIST, TRAKT_METHOD_ADD, TRAKT_START_PAUSED, traktCheckerScheduler, traktRollingScheduler, TRAKT_USE_RECOMMENDED, TRAKT_SYNC, TRAKT_DEFAULT_INDEXER, TRAKT_REMOVE_SERIESLIST, TRAKT_DISABLE_SSL_VERIFY, TRAKT_TIMEOUT, TRAKT_BLACKLIST_NAME, TRAKT_USE_ROLLING_DOWNLOAD, TRAKT_ROLLING_NUM_EP, TRAKT_ROLLING_ADD_PAUSED, TRAKT_ROLLING_FREQUENCY, TRAKT_ROLLING_DEFAULT_WATCHED_STATUS, \
             USE_PLEX, PLEX_NOTIFY_ONSNATCH, PLEX_NOTIFY_ONDOWNLOAD, PLEX_NOTIFY_ONSUBTITLEDOWNLOAD, PLEX_UPDATE_LIBRARY, \
             PLEX_SERVER_HOST, PLEX_SERVER_TOKEN, PLEX_HOST, PLEX_USERNAME, PLEX_PASSWORD, DEFAULT_BACKLOG_FREQUENCY, MIN_BACKLOG_FREQUENCY, BACKLOG_STARTUP, SKIP_REMOVED_FILES, \
-            showUpdateScheduler, __INITIALIZED__, LAUNCH_BROWSER, UPDATE_SHOWS_ON_START, UPDATE_SHOWS_ON_SNATCH, TRASH_REMOVE_SHOW, TRASH_ROTATE_LOGS, SORT_ARTICLE, showList, loadingShowList, \
+            showUpdateScheduler, __INITIALIZED__, INDEXER_DEFAULT_LANGUAGE, LAUNCH_BROWSER, UPDATE_SHOWS_ON_START, UPDATE_SHOWS_ON_SNATCH, TRASH_REMOVE_SHOW, TRASH_ROTATE_LOGS, SORT_ARTICLE, showList, loadingShowList, \
             NEWZNAB_DATA, NZBS, NZBS_UID, NZBS_HASH, INDEXER_DEFAULT, INDEXER_TIMEOUT, USENET_RETENTION, TORRENT_DIR, \
-            QUALITY_DEFAULT, FLATTEN_FOLDERS_DEFAULT, SUBTITLES_DEFAULT, STATUS_DEFAULT, DAILYSEARCH_STARTUP, \
+            QUALITY_DEFAULT, FLATTEN_FOLDERS_DEFAULT, SUBTITLES_DEFAULT, STATUS_DEFAULT, AUDIO_SHOW_DEFAULT, DAILYSEARCH_STARTUP, \
             GROWL_NOTIFY_ONSNATCH, GROWL_NOTIFY_ONDOWNLOAD, GROWL_NOTIFY_ONSUBTITLEDOWNLOAD, TWITTER_NOTIFY_ONSNATCH, TWITTER_NOTIFY_ONDOWNLOAD, TWITTER_NOTIFY_ONSUBTITLEDOWNLOAD, USE_FREEMOBILE, FREEMOBILE_ID, FREEMOBILE_APIKEY, FREEMOBILE_NOTIFY_ONSNATCH, FREEMOBILE_NOTIFY_ONDOWNLOAD, FREEMOBILE_NOTIFY_ONSUBTITLEDOWNLOAD, \
             USE_GROWL, GROWL_HOST, GROWL_PASSWORD, USE_PROWL, PROWL_NOTIFY_ONSNATCH, PROWL_NOTIFY_ONDOWNLOAD, PROWL_NOTIFY_ONSUBTITLEDOWNLOAD, PROWL_API, PROWL_PRIORITY, PROG_DIR, \
             USE_PYTIVO, PYTIVO_NOTIFY_ONSNATCH, PYTIVO_NOTIFY_ONDOWNLOAD, PYTIVO_NOTIFY_ONSUBTITLEDOWNLOAD, PYTIVO_UPDATE_LIBRARY, PYTIVO_HOST, PYTIVO_SHARE_NAME, PYTIVO_TIVO_NAME, \
@@ -557,11 +564,11 @@ def initialize(consoleLogging=True):
             GUI_NAME, HOME_LAYOUT, HISTORY_LAYOUT, DISPLAY_SHOW_SPECIALS, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, COMING_EPS_MISSED_RANGE, DISPLAY_FILESIZE, FUZZY_DATING, TRIM_ZERO, DATE_PRESET, TIME_PRESET, TIME_PRESET_W_SECONDS, THEME_NAME, \
             POSTER_SORTBY, POSTER_SORTDIR, \
             METADATA_WDTV, METADATA_TIVO, METADATA_MEDE8ER, IGNORE_WORDS, REQUIRE_WORDS, CALENDAR_UNPROTECTED, NO_RESTART, CREATE_MISSING_SHOW_DIRS, \
-            ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, SUBTITLES_HISTORY, SUBTITLES_FINDER_FREQUENCY, SUBTITLES_MULTI, subtitlesFinderScheduler, \
+            ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, SUBTITLES_HISTORY, SUBTITLES_FINDER_FREQUENCY, SUBTITLES_MULTI, EMBEDDED_SUBTITLES_ALL, subtitlesFinderScheduler, \
             USE_FAILED_DOWNLOADS, DELETE_FAILED, ANON_REDIRECT, LOCALHOST_IP, TMDB_API_KEY, DEBUG, PROXY_SETTING, PROXY_INDEXERS, \
             AUTOPOSTPROCESSER_FREQUENCY, SHOWUPDATE_HOUR, DEFAULT_AUTOPOSTPROCESSER_FREQUENCY, MIN_AUTOPOSTPROCESSER_FREQUENCY, \
             ANIME_DEFAULT, NAMING_ANIME, ANIMESUPPORT, USE_ANIDB, ANIDB_USERNAME, ANIDB_PASSWORD, ANIDB_USE_MYLIST, \
-            ANIME_SPLIT_HOME, SCENE_DEFAULT, PLAY_VIDEOS, DOWNLOAD_URL, BACKLOG_DAYS, GIT_ORG, GIT_REPO, GIT_USERNAME, GIT_PASSWORD, \
+            ANIME_SPLIT_HOME, SCENE_DEFAULT, DOWNLOAD_URL, BACKLOG_DAYS, GIT_ORG, GIT_REPO, GIT_USERNAME, GIT_PASSWORD, \
             GIT_AUTOISSUES, DEVELOPER, gh
 
         if __INITIALIZED__:
@@ -713,9 +720,10 @@ def initialize(consoleLogging=True):
         WEB_COOKIE_SECRET = check_setting_str(CFG, 'General', 'web_cookie_secret', helpers.generateCookieSecret(), censor_log=True)
         if not WEB_COOKIE_SECRET:
             WEB_COOKIE_SECRET = helpers.generateCookieSecret()
-        LAUNCH_BROWSER = bool(check_setting_int(CFG, 'General', 'launch_browser', 1))
 
-        PLAY_VIDEOS = bool(check_setting_int(CFG, 'General', 'play_videos', 0))
+        INDEXER_DEFAULT_LANGUAGE = check_setting_str(CFG, 'General', 'indexerDefaultLang', 'en')
+
+        LAUNCH_BROWSER = bool(check_setting_int(CFG, 'General', 'launch_browser', 1))
 
         DOWNLOAD_URL = check_setting_str(CFG, 'General', 'download_url', "")
 
@@ -756,6 +764,7 @@ def initialize(consoleLogging=True):
         VERSION_NOTIFY = bool(check_setting_int(CFG, 'General', 'version_notify', 1))
         AUTO_UPDATE = bool(check_setting_int(CFG, 'General', 'auto_update', 0))
         NOTIFY_ON_UPDATE = bool(check_setting_int(CFG, 'General', 'notify_on_update', 1))
+        AUDIO_SHOW_DEFAULT = check_setting_str(CFG, 'General', 'audio_show_default', 'fr' )
         FLATTEN_FOLDERS_DEFAULT = bool(check_setting_int(CFG, 'General', 'flatten_folders_default', 0))
         INDEXER_DEFAULT = check_setting_int(CFG, 'General', 'indexer_default', 0)
         INDEXER_TIMEOUT = check_setting_int(CFG, 'General', 'indexer_timeout', 20)
@@ -998,6 +1007,11 @@ def initialize(consoleLogging=True):
         TRAKT_DISABLE_SSL_VERIFY = bool(check_setting_int(CFG, 'Trakt', 'trakt_disable_ssl_verify', 0))
         TRAKT_TIMEOUT = check_setting_int(CFG, 'Trakt', 'trakt_timeout', 30)
         TRAKT_BLACKLIST_NAME = check_setting_str(CFG, 'Trakt', 'trakt_blacklist_name', '')
+        TRAKT_USE_ROLLING_DOWNLOAD = bool(check_setting_int(CFG, 'Trakt', 'trakt_use_rolling_download', 0))
+        TRAKT_ROLLING_NUM_EP = check_setting_int(CFG, 'Trakt', 'trakt_rolling_num_ep', 0)
+        TRAKT_ROLLING_ADD_PAUSED = check_setting_int(CFG, 'Trakt', 'trakt_rolling_add_paused', 1)
+        TRAKT_ROLLING_FREQUENCY = check_setting_int(CFG, 'Trakt', 'trakt_rolling_frequency', 15)
+        TRAKT_ROLLING_DEFAULT_WATCHED_STATUS = check_setting_int(CFG, 'Trakt', 'trakt_rolling_default_watched_status', 3)
 
         CheckSection(CFG, 'pyTivo')
         USE_PYTIVO = bool(check_setting_int(CFG, 'pyTivo', 'use_pytivo', 0))
@@ -1054,6 +1068,7 @@ def initialize(consoleLogging=True):
                                       if x]
         SUBTITLES_DEFAULT = bool(check_setting_int(CFG, 'Subtitles', 'subtitles_default', 0))
         SUBTITLES_HISTORY = bool(check_setting_int(CFG, 'Subtitles', 'subtitles_history', 0))
+        EMBEDDED_SUBTITLES_ALL = bool(check_setting_int(CFG, 'Subtitles', 'embedded_subtitles_all', 0))
         SUBTITLES_FINDER_FREQUENCY = check_setting_int(CFG, 'Subtitles', 'subtitles_finder_frequency', 1)
         SUBTITLES_MULTI = bool(check_setting_int(CFG, 'Subtitles', 'subtitles_multi', 1))
 
@@ -1318,6 +1333,11 @@ def initialize(consoleLogging=True):
                                                     threadName="TRAKTCHECKER",
                                                     silent=not USE_TRAKT)
 
+        traktRollingScheduler = scheduler.Scheduler(traktChecker.TraktRolling(),
+                                                    cycleTime=datetime.timedelta(TRAKT_ROLLING_FREQUENCY),
+                                                    threadName="TRAKTROLLING",
+                                                    silent=not TRAKT_USE_ROLLING_DOWNLOAD)
+
         subtitlesFinderScheduler = scheduler.Scheduler(subtitles.SubtitlesFinder(),
                                                        cycleTime=datetime.timedelta(hours=SUBTITLES_FINDER_FREQUENCY),
                                                        threadName="FINDSUBTITLES",
@@ -1334,7 +1354,7 @@ def start():
     global __INITIALIZED__, backlogSearchScheduler, \
         showUpdateScheduler, versionCheckScheduler, showQueueScheduler, \
         properFinderScheduler, autoPostProcesserScheduler, searchQueueScheduler, \
-        subtitlesFinderScheduler, USE_SUBTITLES, traktCheckerScheduler, \
+        subtitlesFinderScheduler, USE_SUBTITLES, traktCheckerScheduler, traktRollingScheduler,  \
         dailySearchScheduler, events, started
 
     with INIT_LOCK:
@@ -1376,6 +1396,10 @@ def start():
             if USE_TRAKT:
                 traktCheckerScheduler.start()
 
+            # start the trakt checker
+            if TRAKT_USE_ROLLING_DOWNLOAD and USE_TRAKT:
+                traktRollingScheduler.start()
+
             started = True
 
 
@@ -1383,7 +1407,7 @@ def halt():
     global __INITIALIZED__, backlogSearchScheduler, \
         showUpdateScheduler, versionCheckScheduler, showQueueScheduler, \
         properFinderScheduler, autoPostProcesserScheduler, searchQueueScheduler, \
-        subtitlesFinderScheduler, traktCheckerScheduler, \
+        subtitlesFinderScheduler, traktCheckerScheduler, traktRollingScheduler, \
         dailySearchScheduler, events, started
 
     with INIT_LOCK:
@@ -1457,6 +1481,14 @@ def halt():
                 except:
                     pass
 
+            if TRAKT_USE_ROLLING_DOWNLOAD and USE_TRAKT:
+                traktRollingScheduler.stop.set()
+                logger.log(u"Waiting for the TRAKTROLLING thread to exit")
+                try:
+                    traktRollingScheduler.join(10)
+                except:
+                    pass
+
             if DOWNLOAD_PROPERS:
                 properFinderScheduler.stop.set()
                 logger.log(u"Waiting for the PROPERFINDER thread to exit")
@@ -1480,7 +1512,7 @@ def halt():
                     ADBA_CONNECTION.join(10)
                 except:
                     pass
-            
+
             __INITIALIZED__ = False
             started = False
 
@@ -1543,7 +1575,6 @@ def save_config():
     new_config['General']['web_username'] = WEB_USERNAME
     new_config['General']['web_password'] = helpers.encrypt(WEB_PASSWORD, ENCRYPTION_VERSION)
     new_config['General']['web_cookie_secret'] = WEB_COOKIE_SECRET
-    new_config['General']['play_videos'] = int(PLAY_VIDEOS)
     new_config['General']['download_url'] = DOWNLOAD_URL
     new_config['General']['localhost_ip'] = LOCALHOST_IP
     new_config['General']['cpu_preset'] = CPU_PRESET
@@ -1573,6 +1604,7 @@ def save_config():
     new_config['General']['skip_removed_files'] = int(SKIP_REMOVED_FILES)
     new_config['General']['quality_default'] = int(QUALITY_DEFAULT)
     new_config['General']['status_default'] = int(STATUS_DEFAULT)
+    new_config['General']['audio_show_default'] = AUDIO_SHOW_DEFAULT
     new_config['General']['flatten_folders_default'] = int(FLATTEN_FOLDERS_DEFAULT)
     new_config['General']['indexer_default'] = int(INDEXER_DEFAULT)
     new_config['General']['indexer_timeout'] = int(INDEXER_TIMEOUT)
@@ -1593,6 +1625,7 @@ def save_config():
     new_config['General']['naming_multi_ep'] = int(NAMING_MULTI_EP)
     new_config['General']['naming_anime_multi_ep'] = int(NAMING_ANIME_MULTI_EP)
     new_config['General']['naming_anime'] = int(NAMING_ANIME)
+    new_config['General']['indexerDefaultLang'] = INDEXER_DEFAULT_LANGUAGE
     new_config['General']['launch_browser'] = int(LAUNCH_BROWSER)
     new_config['General']['update_shows_on_start'] = int(UPDATE_SHOWS_ON_START)
     new_config['General']['update_shows_on_snatch'] = int(UPDATE_SHOWS_ON_SNATCH)
@@ -1899,6 +1932,11 @@ def save_config():
     new_config['Trakt']['trakt_disable_ssl_verify'] = int(TRAKT_DISABLE_SSL_VERIFY)
     new_config['Trakt']['trakt_timeout'] = int(TRAKT_TIMEOUT)
     new_config['Trakt']['trakt_blacklist_name'] = TRAKT_BLACKLIST_NAME
+    new_config['Trakt']['trakt_use_rolling_download'] = int(TRAKT_USE_ROLLING_DOWNLOAD)
+    new_config['Trakt']['trakt_rolling_num_ep'] = int(TRAKT_ROLLING_NUM_EP)
+    new_config['Trakt']['trakt_rolling_add_paused'] = int(TRAKT_ROLLING_ADD_PAUSED)
+    new_config['Trakt']['trakt_rolling_frequency'] = int(TRAKT_ROLLING_FREQUENCY)
+    new_config['Trakt']['trakt_rolling_default_watched_status'] = int(TRAKT_ROLLING_DEFAULT_WATCHED_STATUS)
 
     new_config['pyTivo'] = {}
     new_config['pyTivo']['use_pytivo'] = int(USE_PYTIVO)
@@ -1979,6 +2017,7 @@ def save_config():
     new_config['Subtitles']['subtitles_dir'] = SUBTITLES_DIR
     new_config['Subtitles']['subtitles_default'] = int(SUBTITLES_DEFAULT)
     new_config['Subtitles']['subtitles_history'] = int(SUBTITLES_HISTORY)
+    new_config['Subtitles']['embedded_subtitles_all'] = int(EMBEDDED_SUBTITLES_ALL)
     new_config['Subtitles']['subtitles_finder_frequency'] = int(SUBTITLES_FINDER_FREQUENCY)
     new_config['Subtitles']['subtitles_multi'] = int(SUBTITLES_MULTI)
 

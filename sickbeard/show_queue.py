@@ -78,13 +78,16 @@ class ShowQueue(generic_queue.GenericQueue):
     def updateShow(self, show, force=False):
 
         if self.isBeingAdded(show):
-            logger.log(str(show.name) + u" is still being added, wait until it is finished before you update.",logger.DEBUG)
+            raise exceptions.CantUpdateException(
+                str(show.name) + u" is still being added, wait until it is finished before you update.")
 
         if self.isBeingUpdated(show):
-            logger.log(str(show.name) + u" is already being updated by Post-processor or manually started, can't update again until it's done.",logger.DEBUG)
+            raise exceptions.CantUpdateException(
+                str(show.name) + u" is already being updated by Post-processor or manually started, can't update again until it's done.")
 
         if self.isInUpdateQueue(show):
-            logger.log(str(show.name) + u" is in process of being updated by Post-processor or manually started, can't update again until it's done.",logger.DEBUG)
+            raise exceptions.CantUpdateException(
+                str(show.name) + u" is in process of being updated by Post-processor or manually started, can't update again until it's done.")
 
         if not force:
             queueItemObj = QueueItemUpdate(show)
@@ -102,7 +105,7 @@ class ShowQueue(generic_queue.GenericQueue):
 
         if (self.isBeingUpdated(show) or self.isInUpdateQueue(show)) and not force:
             logger.log(
-                u"A refresh was attempted but there is already an update queued or in progress. Since updates do a refres at the end anyway I'm skipping this request.",
+                u"A refresh was attempted but there is already an update queued or in progress. Since updates do a refresh at the end anyway I'm skipping this request.",
                 logger.DEBUG)
             return
 
@@ -129,9 +132,13 @@ class ShowQueue(generic_queue.GenericQueue):
         return queueItemObj
 
     def addShow(self, indexer, indexer_id, showDir, default_status=None, quality=None, flatten_folders=None,
-                lang="en", subtitles=None, anime=None, scene=None, paused=None):
+                lang=None, subtitles=None, anime=None, scene=None, paused=None, audio_lang=None):
+
+        if lang is None:
+            lang = sickbeard.INDEXER_DEFAULT_LANGUAGE
+
         queueItemObj = QueueItemAdd(indexer, indexer_id, showDir, default_status, quality, flatten_folders, lang,
-                                    subtitles, anime, scene, paused)
+                                    subtitles, anime, scene, paused, audio_lang)
 
         self.add_item(queueItemObj)
 
@@ -188,7 +195,7 @@ class ShowQueueItem(generic_queue.QueueItem):
 
 class QueueItemAdd(ShowQueueItem):
     def __init__(self, indexer, indexer_id, showDir, default_status, quality, flatten_folders, lang, subtitles, anime,
-                 scene, paused):
+                 scene, paused, audio_lang):
 
         self.indexer = indexer
         self.indexer_id = indexer_id
@@ -201,6 +208,10 @@ class QueueItemAdd(ShowQueueItem):
         self.anime = anime
         self.scene = scene
         self.paused = paused
+        self.audio_lang = audio_lang
+
+        if sickbeard.TRAKT_USE_ROLLING_DOWNLOAD and sickbeard.USE_TRAKT:
+            self.paused = sickbeard.TRAKT_ROLLING_ADD_PAUSED
 
         self.show = None
 
@@ -276,7 +287,7 @@ class QueueItemAdd(ShowQueueItem):
             return
 
         try:
-            newShow = TVShow(self.indexer, self.indexer_id, self.lang)
+            newShow = TVShow(self.indexer, self.indexer_id, self.lang, self.audio_lang)
             newShow.loadFromIndexer()
 
             self.show = newShow
@@ -363,6 +374,8 @@ class QueueItemAdd(ShowQueueItem):
         except Exception, e:
             logger.log(u"Error searching dir for episodes: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
+
+        sickbeard.traktRollingScheduler.action.updateWantedList(self.show.indexerid)
 
         # if they set default ep status to WANTED then run the backlog to search for episodes
         if self.show.default_ep_status == WANTED:

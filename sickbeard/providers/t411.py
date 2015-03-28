@@ -44,6 +44,7 @@ class T411Provider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "T411")
 
         self.supportsBacklog = True
+        self.supportsFrench = True
         self.enabled = False
         self.username = None
         self.password = None
@@ -52,7 +53,7 @@ class T411Provider(generic.TorrentProvider):
         self.cache = T411Cache(self)
 
         self.urls = {'base_url': 'http://www.t411.io/',
-                'search': 'http://www.t411.io/torrents/search/?name=%s&cat=210&subcat=%s&search=%s&submit=Recherche',
+                'search': 'http://www.t411.io/torrents/search/?name=%s&cat=210&subcat=%s&search=%s&submit=Recherche%s',
                 'login_page': 'http://www.t411.io/users/login/',
                 'download': 'http://www.t411.io/torrents/download/?id=%s',
                 }
@@ -70,7 +71,7 @@ class T411Provider(generic.TorrentProvider):
     def getQuality(self, item, anime=False):
         quality = Quality.sceneQuality(item[0], anime)
         return quality
-
+      
     def _doLogin(self):
         login_params = {'login': self.username,
                         'password': self.password,
@@ -129,7 +130,7 @@ class T411Provider(generic.TorrentProvider):
 
     def _get_season_search_strings(self, ep_obj):
 
-        search_string = {'Season': []}
+        search_string = {'Season': [], 'Langcat' : ''}
         for show_name in set(show_name_helpers.allPossibleShowNames(self.show)):
             if ep_obj.show.air_by_date or ep_obj.show.sports:
                 ep_string = show_name + '.' + str(ep_obj.airdate).split('-')[0]
@@ -139,12 +140,14 @@ class T411Provider(generic.TorrentProvider):
                 ep_string = show_name + '.S%02d' % int(ep_obj.scene_season)  #1) showName.SXX
 
             search_string['Season'].append(ep_string)
+        
+        search_string['Langcat']=ep_obj.show.audio_lang
 
         return [search_string]
 
     def _get_episode_search_strings(self, ep_obj, add_string=''):
 
-        search_string = {'Episode': []}
+        search_string = {'Episode': [],'Langcat': ''}
 
         if not ep_obj:
             return []
@@ -172,18 +175,29 @@ class T411Provider(generic.TorrentProvider):
                                                                   'episodenumber': ep_obj.scene_episode} + ' %s' % add_string
 
                 search_string['Episode'].append(re.sub('\s+', '.', ep_string))
-
+        
+        search_string['Langcat']=ep_obj.show.audio_lang
+        
         return [search_string]
 
     def _doSearch(self, search_params, search_mode='eponly', epcount=0, age=0):
 
         results = []
+        langterm=""
         items = {'Season': [], 'Episode': [], 'RSS': []}
+        langcat=search_params['Langcat']
+        if langcat == "en":
+            langterm="&term%5B17%5D%5B%5D=721"
+        elif langcat == "fr":
+            langterm="&term%5B17%5D%5B%5D=541&term%5B17%5D%5B%5D=542"          
 
         if not self._doLogin():
             return results
 
         for mode in search_params.keys():
+            
+            if mode=='Langcat':
+                continue
 
             for search_string in search_params[mode]:
 
@@ -191,9 +205,9 @@ class T411Provider(generic.TorrentProvider):
                     search_string2 = ''
                 else:
                     search_string2 = '%40name+' + search_string + '+'
-
+                
                 for sc in self.subcategories:
-                    searchURL = self.urls['search'] % (search_string, sc, search_string2)
+                    searchURL = self.urls['search'] % (search_string, sc, search_string2,langterm)
                     logger.log(u"" + self.name + " search page URL: " + searchURL, logger.DEBUG)
 
                     data = self.getURL(searchURL)
@@ -227,7 +241,7 @@ class T411Provider(generic.TorrentProvider):
                                     if not torrent_name or not torrent_download_url:
                                         continue
 
-                                    item = torrent_name, torrent_download_url
+                                    item = torrent_name, torrent_download_url,langcat
                                     logger.log(u"Found result: " + torrent_name + " (" + torrent_download_url + ")",
                                                logger.DEBUG)
                                     items[mode].append(item)
@@ -246,7 +260,7 @@ class T411Provider(generic.TorrentProvider):
 
     def _get_title_and_url(self, item):
 
-        title, url = item
+        title, url, lang = item
 
         if title:
             title = u'' + title
@@ -255,7 +269,7 @@ class T411Provider(generic.TorrentProvider):
         if url:
             url = str(url).replace('&amp;', '&')
 
-        return title, url
+        return title, url, lang
 
     def findPropers(self, search_date=datetime.datetime.today()):
 
@@ -297,7 +311,7 @@ class T411Cache(tvcache.TVCache):
         self.minTime = 10
 
     def _getRSSData(self):
-        search_params = {'RSS': ['']}
+        search_params = {'RSS': [''],'Langcat' : ""}
         return {'entries': self.provider._doSearch(search_params)}
 
 

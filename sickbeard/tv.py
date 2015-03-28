@@ -77,7 +77,7 @@ def dirty_setter(attr_name):
 
 
 class TVShow(object):
-    def __init__(self, indexer, indexerid, lang=""):
+    def __init__(self, indexer, indexerid, lang="", audio_lang=""):
         self._indexerid = int(indexerid)
         self._indexer = int(indexer)
         self._name = ""
@@ -98,6 +98,7 @@ class TVShow(object):
         self._dvdorder = 0
         self._archive_firstmatch = 0
         self._lang = lang
+        self._audio_lang = audio_lang
         self._last_update_indexer = 1
         self._sports = 0
         self._anime = 0
@@ -140,6 +141,7 @@ class TVShow(object):
     dvdorder = property(lambda self: self._dvdorder, dirty_setter("_dvdorder"))
     archive_firstmatch = property(lambda self: self._archive_firstmatch, dirty_setter("_archive_firstmatch"))
     lang = property(lambda self: self._lang, dirty_setter("_lang"))
+    audio_lang = property(lambda self: self._audio_lang, dirty_setter("_audio_lang"))
     last_update_indexer = property(lambda self: self._last_update_indexer, dirty_setter("_last_update_indexer"))
     sports = property(lambda self: self._sports, dirty_setter("_sports"))
     anime = property(lambda self: self._anime, dirty_setter("_anime"))
@@ -809,6 +811,9 @@ class TVShow(object):
 
             if not self.lang:
                 self.lang = sqlResults[0]["lang"]
+            
+            if self.audio_lang=="":
+                self.audio_lang = sqlResults[0]["audio_lang"]
 
             self.last_update_indexer = sqlResults[0]["last_update_indexer"]
 
@@ -1082,12 +1087,12 @@ class TVShow(object):
                 # check if downloaded files still exist, update our data if this has changed
                 if not sickbeard.SKIP_REMOVED_FILES:
                     with curEp.lock:
-                        # if it used to have a file associated with it and it doesn't anymore then set it to IGNORED
+                        # if it used to have a file associated with it and it doesn't anymore then set it to ARCHIVED
                         if curEp.location and curEp.status in Quality.DOWNLOADED:
                             logger.log(str(self.indexerid) + u": Location for " + str(season) + "x" + str(
-                                episode) + " doesn't exist, removing it and changing our status to IGNORED",
+                                episode) + " doesn't exist, removing it and changing our status to ARCHIVED",
                                        logger.DEBUG)
-                            curEp.status = IGNORED
+                            curEp.status = ARCHIVED
                             curEp.subtitles = list()
                             curEp.subtitles_searchcount = 0
                             curEp.subtitles_lastsearch = str(datetime.datetime.min)
@@ -1156,6 +1161,7 @@ class TVShow(object):
                         "archive_firstmatch": self.archive_firstmatch,
                         "startyear": self.startyear,
                         "lang": self.lang,
+                        "audio_lang": self.audio_lang,
                         "imdb_id": self.imdbid,
                         "last_update_indexer": self.last_update_indexer,
                         "rls_ignore_words": self.rls_ignore_words,
@@ -1333,6 +1339,7 @@ class TVEpisode(object):
         self._status = UNKNOWN
         self._indexerid = 0
         self._file_size = 0
+        self._audio_langs = ''
         self._release_name = ''
         self._is_proper = False
         self._version = 0
@@ -1377,6 +1384,7 @@ class TVEpisode(object):
     indexerid = property(lambda self: self._indexerid, dirty_setter("_indexerid"))
     # location = property(lambda self: self._location, dirty_setter("_location"))
     file_size = property(lambda self: self._file_size, dirty_setter("_file_size"))
+    audio_langs = property(lambda self: self._audio_langs, dirty_setter("_audio_langs"))
     release_name = property(lambda self: self._release_name, dirty_setter("_release_name"))
     is_proper = property(lambda self: self._is_proper, dirty_setter("_is_proper"))
     version = property(lambda self: self._version, dirty_setter("_version"))
@@ -1603,6 +1611,9 @@ class TVEpisode(object):
                     self.season, self.episode
                 )
 
+            if sqlResults[0]["audio_langs"] != None:
+                self.audio_langs = sqlResults[0]["audio_langs"]
+            
             if sqlResults[0]["release_name"] is not None:
                 self.release_name = sqlResults[0]["release_name"]
 
@@ -1896,6 +1907,7 @@ class TVEpisode(object):
         toReturn += "hasnfo: " + str(self.hasnfo) + "\n"
         toReturn += "hastbn: " + str(self.hastbn) + "\n"
         toReturn += "status: " + str(self.status) + "\n"
+        toReturn += "languages: " + str(self.audio_langs) + "\n"
         return toReturn
 
     def createMetaFiles(self):
@@ -1976,38 +1988,38 @@ class TVEpisode(object):
                     "UPDATE tv_episodes SET indexerid = ?, indexer = ?, name = ?, description = ?, subtitles = ?, "
                     "subtitles_searchcount = ?, subtitles_lastsearch = ?, airdate = ?, hasnfo = ?, hastbn = ?, status = ?, "
                     "location = ?, file_size = ?, release_name = ?, is_proper = ?, showid = ?, season = ?, episode = ?, "
-                    "absolute_number = ?, version = ?, release_group = ? WHERE episode_id = ?",
+                    "absolute_number = ?, version = ?, release_group = ?, audio_langs = ? WHERE episode_id = ?",
                     [self.indexerid, self.indexer, self.name, self.description, ",".join([sub for sub in self.subtitles]),
                      self.subtitles_searchcount, self.subtitles_lastsearch, self.airdate.toordinal(), self.hasnfo,
                      self.hastbn,
                      self.status, self.location, self.file_size, self.release_name, self.is_proper, self.show.indexerid,
-                     self.season, self.episode, self.absolute_number, self.version, self.release_group, epID]]
+                     self.season, self.episode, self.absolute_number, self.version, self.release_group, self.audio_langs, epID]]
             else:
                 # Don't update the subtitle language when the srt file doesn't contain the alpha2 code, keep value from subliminal
                 return [
                     "UPDATE tv_episodes SET indexerid = ?, indexer = ?, name = ?, description = ?, "
                     "subtitles_searchcount = ?, subtitles_lastsearch = ?, airdate = ?, hasnfo = ?, hastbn = ?, status = ?, "
                     "location = ?, file_size = ?, release_name = ?, is_proper = ?, showid = ?, season = ?, episode = ?, "
-                    "absolute_number = ?, version = ?, release_group = ? WHERE episode_id = ?",
+                    "absolute_number = ?, version = ?, release_group = ?, audio_langs = ? WHERE episode_id = ?",
                     [self.indexerid, self.indexer, self.name, self.description,
                      self.subtitles_searchcount, self.subtitles_lastsearch, self.airdate.toordinal(), self.hasnfo,
                      self.hastbn,
                      self.status, self.location, self.file_size, self.release_name, self.is_proper, self.show.indexerid,
-                     self.season, self.episode, self.absolute_number, self.version, self.release_group, epID]]
+                     self.season, self.episode, self.absolute_number, self.version, self.release_group, self.audio_langs, epID]]
         else:
             # use a custom insert method to get the data into the DB.
             return [
                 "INSERT OR IGNORE INTO tv_episodes (episode_id, indexerid, indexer, name, description, subtitles, "
                 "subtitles_searchcount, subtitles_lastsearch, airdate, hasnfo, hastbn, status, location, file_size, "
-                "release_name, is_proper, showid, season, episode, absolute_number, version, release_group) VALUES "
+                "release_name, is_proper, showid, season, episode, absolute_number, version, release_group, audio_langs) VALUES "
                 "((SELECT episode_id FROM tv_episodes WHERE showid = ? AND season = ? AND episode = ?)"
-                ",?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
+                ",?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
                 [self.show.indexerid, self.season, self.episode, self.indexerid, self.indexer, self.name,
                  self.description,
                  ",".join([sub for sub in self.subtitles]), self.subtitles_searchcount, self.subtitles_lastsearch,
                  self.airdate.toordinal(), self.hasnfo, self.hastbn, self.status, self.location, self.file_size,
                  self.release_name, self.is_proper, self.show.indexerid, self.season, self.episode,
-                 self.absolute_number, self.version, self.release_group]]
+                 self.absolute_number, self.version, self.release_group, self.audio_langs]]
 
     def saveToDB(self, forceSave=False):
         """
@@ -2037,6 +2049,7 @@ class TVEpisode(object):
                         "hastbn": self.hastbn,
                         "status": self.status,
                         "location": self.location,
+                        "audio_langs": self.audio_langs,
                         "file_size": self.file_size,
                         "release_name": self.release_name,
                         "is_proper": self.is_proper,

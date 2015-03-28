@@ -48,6 +48,8 @@ class NextGenProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "NextGen")
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.enabled = False
         self.username = None
