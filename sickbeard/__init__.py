@@ -637,7 +637,7 @@ def initialize(consoleLogging=True):
         # git_remote
         GIT_REMOTE = check_setting_str(CFG, 'General', 'git_remote', 'origin')
         GIT_REMOTE_URL = check_setting_str(CFG, 'General', 'git_remote_url',
-                                           'https://github.com/SiCKRAGETV/SickRage.git')
+                                           'https://github.com/sarakha63/SickRageVF.git')
 
         # current commit hash
         CUR_COMMIT_HASH = check_setting_str(CFG, 'General', 'cur_commit_hash', '')
