@@ -47,7 +47,7 @@ class KATProvider(generic.TorrentProvider):
 
         self.supportsBacklog = True
         
-        self.supportsFrench = False
+        self.supportsFrench = True
 
         self.enabled = False
         self.confirmed = False
@@ -164,45 +164,57 @@ class KATProvider(generic.TorrentProvider):
 
 
     def _get_season_search_strings(self, ep_obj):
-        search_string = {'Season': []}
+        search_string = {'Season': [], 'Langcat' : ''}
+        
+        if ep_obj.show.audio_lang=='fr':
+            langtext=' french'
+        else:
+            langtext=''
 
         for show_name in set(allPossibleShowNames(self.show)):
             if ep_obj.show.air_by_date or ep_obj.show.sports:
-                ep_string = show_name + ' ' + str(ep_obj.airdate).split('-')[0]
+                ep_string = show_name + ' ' + str(ep_obj.airdate).split('-')[0]+langtext
                 search_string['Season'].append(ep_string)
-                ep_string = show_name + ' Season ' + str(ep_obj.airdate).split('-')[0]
+                ep_string = show_name + ' Season ' + str(ep_obj.airdate).split('-')[0]+langtext
                 search_string['Season'].append(ep_string)
             elif ep_obj.show.anime:
-                ep_string = show_name + ' ' + "%02d" % ep_obj.scene_absolute_number
+                ep_string = show_name + ' ' + "%02d" % ep_obj.scene_absolute_number+langtext
                 search_string['Season'].append(ep_string)
             else:
                 ep_string = show_name + ' S%02d' % int(ep_obj.scene_season) + ' -S%02d' % int(
                     ep_obj.scene_season) + 'E' + ' category:tv'  #1) showName SXX -SXXE
                 search_string['Season'].append(ep_string)
                 ep_string = show_name + ' Season ' + str(
-                    ep_obj.scene_season) + ' -Ep*' + ' category:tv'  # 2) showName Season X
+                    ep_obj.scene_season) + ' -Ep*' +langtext+ ' category:tv'  # 2) showName Season X
                 search_string['Season'].append(ep_string)
-
+        
+        search_string['Langcat']=ep_obj.show.audio_lang
+        
         return [search_string]
 
     def _get_episode_search_strings(self, ep_obj, add_string=''):
-        search_string = {'Episode': []}
+        search_string = {'Episode': [],'Langcat': ''}
+        
+        if ep_obj.show.audio_lang=='fr':
+            langtext=' french'
+        else:
+            langtext=''
 
         if self.show.air_by_date:
             for show_name in set(allPossibleShowNames(self.show)):
                 ep_string = sanitizeSceneName(show_name) + ' ' + \
-                            str(ep_obj.airdate).replace('-', ' ')
+                            str(ep_obj.airdate).replace('-', ' ')+langtext
                 search_string['Episode'].append(ep_string)
         elif self.show.sports:
             for show_name in set(allPossibleShowNames(self.show)):
                 ep_string = sanitizeSceneName(show_name) + ' ' + \
                             str(ep_obj.airdate).replace('-', '|') + '|' + \
-                            ep_obj.airdate.strftime('%b')
+                            ep_obj.airdate.strftime('%b')+langtext
                 search_string['Episode'].append(ep_string)
         elif self.show.anime:
             for show_name in set(allPossibleShowNames(self.show)):
                 ep_string = sanitizeSceneName(show_name) + ' ' + \
-                            "%02i" % int(ep_obj.scene_absolute_number)
+                            "%02i" % int(ep_obj.scene_absolute_number)+langtext
                 search_string['Episode'].append(ep_string)
         else:
             for show_name in set(allPossibleShowNames(self.show)):
@@ -210,9 +222,11 @@ class KATProvider(generic.TorrentProvider):
                             sickbeard.config.naming_ep_type[2] % {'seasonnumber': ep_obj.scene_season,
                                                                   'episodenumber': ep_obj.scene_episode} + '|' + \
                             sickbeard.config.naming_ep_type[0] % {'seasonnumber': ep_obj.scene_season,
-                                                                  'episodenumber': ep_obj.scene_episode} + ' %s category:tv' % add_string
+                                                                  'episodenumber': ep_obj.scene_episode} +langtext+ ' %s category:tv' % add_string
                 search_string['Episode'].append(re.sub('\s+', ' ', ep_string))
-
+    
+        search_string['Langcat']=ep_obj.show.audio_lang
+        
         return [search_string]
 
 
@@ -220,8 +234,11 @@ class KATProvider(generic.TorrentProvider):
 
         results = []
         items = {'Season': [], 'Episode': [], 'RSS': []}
-
+        langcat=search_params['Langcat']
+        
         for mode in search_params.keys():
+            if mode=='Langcat':
+                continue
             for search_string in search_params[mode]:
                 if isinstance(search_string, unicode):
                     search_string = unidecode(search_string)
@@ -279,7 +296,7 @@ class KATProvider(generic.TorrentProvider):
                                     except AttributeError:
                                         pubdate = datetime.datetime.today()
 
-                        item = title, url, id, seeders, leechers, size, pubdate
+                        item = title, url, id, seeders, leechers, size, pubdate, langcat
 
                         items[mode].append(item)
 
@@ -296,7 +313,7 @@ class KATProvider(generic.TorrentProvider):
 
     def _get_title_and_url(self, item):
 
-        title, url, id, seeders, leechers, size, pubdate = item
+        title, url, id, seeders, leechers, size, pubdate, langcat = item
 
         if title:
             title = u'' + title
@@ -305,7 +322,7 @@ class KATProvider(generic.TorrentProvider):
         if url:
             url = url.replace('&amp;', '&')
 
-        return (title, url)
+        return (title, url,langcat)
 
     def findPropers(self, search_date=datetime.datetime.today()):
 
@@ -351,7 +368,7 @@ class KATCache(tvcache.TVCache):
         self.minTime = 20
 
     def _getRSSData(self):
-        search_params = {'RSS': ['rss']}
+        search_params = {'RSS': ['rss'],'Langcat' : ""}
         return {'entries': self.provider._doSearch(search_params)}
 
 provider = KATProvider()
