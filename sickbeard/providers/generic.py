@@ -225,7 +225,7 @@ class GenericProvider:
         
         Returns a Quality value obtained from the node's data 
         """
-        (title, url) = self._get_title_and_url(item)
+        (title, url, lang) = self._get_title_and_url(item)
         quality = Quality.sceneQuality(title, anime)
         return quality
 
@@ -248,6 +248,7 @@ class GenericProvider:
         """
 
         title = item.get('title')
+        lang=item.get('Langcat')
         if title:
             title = u'' + title.replace(' ', '.')
 
@@ -255,7 +256,7 @@ class GenericProvider:
         if url:
             url = url.replace('&amp;', '&')
 
-        return title, url
+        return title, url, lang
 
     def findSearchResults(self, show, episodes, search_mode, manualSearch=False, downCurQuality=False):
 

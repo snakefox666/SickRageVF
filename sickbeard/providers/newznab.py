@@ -65,7 +65,7 @@ class NewznabProvider(generic.NZBProvider):
         self.enabled = True
         self.supportsBacklog = True
         
-        self.supportsFrench = False
+        self.supportsFrench = True
 
         self.default = False
 
@@ -130,7 +130,7 @@ class NewznabProvider(generic.NZBProvider):
 
         to_return = []
         cur_params = {}
-
+        cur_params['Langcat']=ep_obj.show.audio_lang
         # season
         if ep_obj.show.air_by_date or ep_obj.show.sports:
             date_str = str(ep_obj.airdate).split('-')[0]
@@ -161,6 +161,7 @@ class NewznabProvider(generic.NZBProvider):
     def _get_episode_search_strings(self, ep_obj, add_string=''):
         to_return = []
         params = {}
+        params['Langcat']=ep_obj.show.audio_lang
 
         if not ep_obj:
             return [params]
@@ -244,10 +245,11 @@ class NewznabProvider(generic.NZBProvider):
     def _doSearch(self, search_params, search_mode='eponly', epcount=0, age=0):
 
         self._checkAuth()
-
+        langcat=search_params['Langcat']
+        search_params.pop('Langcat', 0)
         params = {"t": "tvsearch",
                   "maxage": sickbeard.USENET_RETENTION,
-                  "limit": 100,
+                  "limit": 500,
                   "attrs": "rageid",
                   "offset": 0}
 
@@ -258,6 +260,9 @@ class NewznabProvider(generic.NZBProvider):
             params['cat'] = self.catIDs + ',5070'
         else:
             params['cat'] = self.catIDs
+        
+        if langcat=='fr':
+            params['cat'] = '5020'
 
         # if max_age is set, use it, don't allow it to be missing
         if age or not params['maxage']:
@@ -281,10 +286,12 @@ class NewznabProvider(generic.NZBProvider):
                 break
 
             for item in data['entries'] or []:
-
-                (title, url) = self._get_title_and_url(item)
+                item['Langcat']=langcat
+                (title, url,lang) = self._get_title_and_url(item)
 
                 if title and url:
+                    if langcat=='fr' and 'french' not in title.lower():
+                        continue
                     results.append(item)
                 else:
                     logger.log(
@@ -397,7 +404,7 @@ class NewznabCache(tvcache.TVCache):
     def _getRSSData(self):
 
         params = {"t": "tvsearch",
-                  "cat": self.provider.catIDs + ',5060,5070',
+                  "cat": self.provider.catIDs + ',5060,5070,5020',
                   "attrs": "rageid"}
 
         if self.provider.needs_auth and self.provider.key:

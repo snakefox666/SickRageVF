@@ -377,7 +377,6 @@ $myShowList.sort(lambda x, y: cmp(x.name, y.name))
 		<div class="show-image">
 			<a href="$sbRoot/home/displayShow?show=$curShow.indexerid"><img alt="" class="show-image" src="$sbRoot/showPoster/?show=$curShow.indexerid&amp;which=poster_thumb" /></a>
 		</div>
-		
 		<div id="progressbar$curShow.indexerid"></div>
 			<script type="text/javascript">
 			<!--
@@ -406,9 +405,8 @@ $myShowList.sort(lambda x, y: cmp(x.name, y.name))
 			</script>
 			
 		<div class="show-title">
-			$curShow.name
+			$curShow.name&nbsp;&nbsp;&nbsp; <img src="$sbRoot/images/flags/${curShow.audio_lang}.png" width="18" height="12" alt="$curShow.audio_lang" title="$curShow.audio_lang" />
 		</div>
-
 		<div class="show-date">
 #if $cur_airs_next
     #set $ldatetime = $sbdatetime.sbdatetime.convert_to_setting($network_timezones.parse_date_time($cur_airs_next,$curShow.airs,$curShow.network))
