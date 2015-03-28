@@ -49,6 +49,8 @@ class MoreThanTVProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "MoreThanTV")
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.enabled = False
         self._uid = None

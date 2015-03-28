@@ -50,6 +50,8 @@ class ThePirateBayProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "ThePirateBay")
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.enabled = False
         self.ratio = None

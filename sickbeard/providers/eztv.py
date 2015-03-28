@@ -30,6 +30,8 @@ class EZTVProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "EZTV")
 
         self.supportsBacklog = False
+        
+        self.supportsFrench = False
         self.enabled = False
         self.ratio = None
 

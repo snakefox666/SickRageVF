@@ -26,6 +26,8 @@ import os.path
 import regexes
 import sickbeard
 
+from sickbeard.common import showLanguages
+
 from sickbeard import logger, helpers, scene_numbering, common, exceptions as ex, scene_exceptions, encodingKludge as ek, db
 from dateutil import parser
 
@@ -44,6 +46,8 @@ class NameParser(object):
         self.trySceneExceptions = trySceneExceptions
         self.convert = convert
         self.naming_pattern = naming_pattern
+        
+        self.compiled_language_regexes =[]
 
         if self.showObj and not self.showObj.is_anime:
             self._compile_regexes(self.NORMAL_REGEX)
@@ -161,6 +165,18 @@ class NameParser(object):
 
             if 'extra_info' in named_groups:
                 tmp_extra_info = match.group('extra_info')
+                
+                result.audio_langs = 'en'
+                
+                if tmp_extra_info:
+                    for (cur_lang_regex_name, cur_lang_regex) in self.compiled_language_regexes:
+                        lang_match = cur_lang_regex.match(name)
+        
+                        if not lang_match:
+                            continue
+                        else:
+                            logger.log(u"Found " + showLanguages.get(cur_lang_regex_name) + " episode",logger.DEBUG) 
+                            result.audio_langs = cur_lang_regex_name
 
                 # Show.S04.Special or Show.S05.Part.2.Extras is almost certainly not every episode in the season
                 if tmp_extra_info and cur_regex_name == 'season_only' and re.search(
@@ -424,6 +440,7 @@ class NameParser(object):
 
         # build the ParseResult object
         final_result.air_date = self._combine_results(file_name_result, dir_name_result, 'air_date')
+        final_result.audio_langs = self._combine_results(file_name_result, dir_name_result, 'audio_langs')
 
         # anime absolute numbers
         final_result.ab_episode_numbers = self._combine_results(file_name_result, dir_name_result, 'ab_episode_numbers')
@@ -480,7 +497,8 @@ class ParseResult(object):
                  show=None,
                  score=None,
                  quality=None,
-                 version=None
+                 version=None,
+                 audio_langs = 'en'
     ):
 
         self.original_name = original_name
@@ -512,6 +530,8 @@ class ParseResult(object):
         self.score = score
 
         self.version = version
+        
+        self.audio_langs = audio_langs
 
     def __eq__(self, other):
         if not other:
@@ -538,6 +558,8 @@ class ParseResult(object):
         if self.quality != other.quality:
             return False
         if self.version != other.version:
+            return False
+        if self.audio_langs != other.audio_langs:
             return False
 
         return True

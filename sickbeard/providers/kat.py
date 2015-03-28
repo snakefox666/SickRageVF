@@ -46,6 +46,8 @@ class KATProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "KickAssTorrents")
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.enabled = False
         self.confirmed = False

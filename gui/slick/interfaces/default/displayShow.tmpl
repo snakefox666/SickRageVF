@@ -244,7 +244,8 @@
 				#end if
 
 				<tr><td class="showLegend">Size:</td><td>$sickbeard.helpers.pretty_filesize(sickbeard.helpers.get_size($showLoc[0]))</td></tr>
-
+				<tr><td class="showLegend">Audio Language:</td><td><img src="$sbRoot/images/flags/${show.audio_lang}.png" width="16" height="11" alt="$show.audio_lang" title="$show.audio_lang" /></td></tr>
+					
 				</table>
 			
 				<table style="width:180px; float: right; vertical-align: middle; height: 100%;">
@@ -283,9 +284,24 @@
 		<input type="hidden" id="indexer" value="$show.indexer" />
 		<input class="btn btn-inline" type="button" id="changeStatus" value="Go" />
 	</div>
-
+	
+	<div class="pull-left">
 	</br>
-
+	<select id="audioSelect" class="form-control form-control-inline input-sm">
+		#for $k,$v in $showLanguages.iteritems():
+		#if $k!="":
+		<option value="$k"
+			#if $show.audio_lang == $k:
+				selected
+			#end if
+		#end if
+		>$v</option>
+		#end for
+	</select>
+		<input type="hidden" id="showID" value="$show.indexerid" />
+		<input type="hidden" id="indexer" value="$show.indexer" />
+		<input type="button" class="btn" id="changeAudio" value="Go" />
+</div>	
 	<div class="pull-right clearfix" id="checkboxControls">
 		<div style="padding-bottom: 5px;">
 			<label for="wanted"><span class="wanted"><input type="checkbox" id="wanted" checked="checked" /> Wanted: <b>$epCounts[$Overview.WANTED]</b></span></label>
@@ -382,6 +398,7 @@
 			#if $sickbeard.DOWNLOAD_URL
 				<th class="col-ep">Download</th>
 			#end if
+				<th class="col-audio">Audio</th>
 			#if $sickbeard.USE_SUBTITLES and $show.subtitles:
 				<th class="col-subtitles">Subtitles</th>
 			#end if
@@ -487,7 +504,16 @@
 		#elif $sickbeard.DOWNLOAD_URL
 			<td></td>
 		#end if
-		
+		<td align="center" class="audio_langs_column">
+    			#set $curStatus, $curQuality = $Quality.splitCompositeStatus(int($epResult["status"]))
+                #if $epResult["audio_langs"] == "" and $curStatus in [$DOWNLOADED, $SNATCHED, $ARCHIVED, $SUBTITLED, $SNATCHED_PROPER , $SNATCHED_BEST]
+                <img src="$sbRoot/images/flags/unknown.png" alt="" width="20" />
+                #else
+                #if $curStatus in [$DOWNLOADED, $SNATCHED, $ARCHIVED, $SUBTITLED, $SNATCHED_PROPER , $SNATCHED_BEST]
+                <img src="$sbRoot/images/flags/${epResult["audio_langs"]}.png" alt="$epResult["audio_langs"]" width="16" />
+                #end if
+     #end if
+    </td>
 		#if $sickbeard.USE_SUBTITLES and $show.subtitles:
 			<td class="col-subtitles" align="center">
         #if $epResult["subtitles"]:

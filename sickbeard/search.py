@@ -159,6 +159,7 @@ def snatchEpisode(result, endStatus=SNATCHED):
                 curEpObj.status = Quality.compositeStatus(SNATCHED_BEST, result.quality)
             else:
                 curEpObj.status = Quality.compositeStatus(endStatus, result.quality)
+            curEpObj.audio_langs = result.audio_lang
 
             sql_l.append(curEpObj.get_sql())
 

@@ -1,7 +1,24 @@
 #import sickbeard
 #from sickbeard.common import *
 #from sickbeard import subtitles
-
+		
+		<div class="field-pair alt">
+            <label for="showLangSelect" class="clearfix">
+                <span class="component-title">Audio Language</span>
+                <span class="component-desc">
+                    <select name="audio_lang" id="showLangSelect" class="form-control form-control-inline input-sm">
+                   #for $k,$v in $showLanguages.iteritems():
+					#if k!="":
+					<option value="$k"
+					#if $sickbeard.AUDIO_SHOW_DEFAULT == $k then 'selected="selected"' else ''#>$v</option>
+					#end if
+					#end for
+				</select>
+                </span>
+                
+            </label>
+        </div>
+        
 		#if $sickbeard.USE_SUBTITLES:
         <br><div class="field-pair">
             <label for="subtitles" class="clearfix">

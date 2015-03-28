@@ -37,6 +37,8 @@ class Animezb(generic.NZBProvider):
         self.url = self.urls['base_url']
 
         self.supportsBacklog = False
+        
+        self.supportsFrench = False
         self.supportsAbsoluteNumbering = True
         self.anime_only = True
 

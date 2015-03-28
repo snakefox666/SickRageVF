@@ -132,13 +132,13 @@ class ShowQueue(generic_queue.GenericQueue):
         return queueItemObj
 
     def addShow(self, indexer, indexer_id, showDir, default_status=None, quality=None, flatten_folders=None,
-                lang=None, subtitles=None, anime=None, scene=None, paused=None):
+                lang=None, subtitles=None, anime=None, scene=None, paused=None, audio_lang=None):
 
         if lang is None:
             lang = sickbeard.INDEXER_DEFAULT_LANGUAGE
 
         queueItemObj = QueueItemAdd(indexer, indexer_id, showDir, default_status, quality, flatten_folders, lang,
-                                    subtitles, anime, scene, paused)
+                                    subtitles, anime, scene, paused, audio_lang)
 
         self.add_item(queueItemObj)
 
@@ -195,7 +195,7 @@ class ShowQueueItem(generic_queue.QueueItem):
 
 class QueueItemAdd(ShowQueueItem):
     def __init__(self, indexer, indexer_id, showDir, default_status, quality, flatten_folders, lang, subtitles, anime,
-                 scene, paused):
+                 scene, paused, audio_lang):
 
         self.indexer = indexer
         self.indexer_id = indexer_id
@@ -208,6 +208,7 @@ class QueueItemAdd(ShowQueueItem):
         self.anime = anime
         self.scene = scene
         self.paused = paused
+        self.audio_lang = audio_lang
 
         if sickbeard.TRAKT_USE_ROLLING_DOWNLOAD and sickbeard.USE_TRAKT:
             self.paused = sickbeard.TRAKT_ROLLING_ADD_PAUSED
@@ -286,7 +287,7 @@ class QueueItemAdd(ShowQueueItem):
             return
 
         try:
-            newShow = TVShow(self.indexer, self.indexer_id, self.lang)
+            newShow = TVShow(self.indexer, self.indexer_id, self.lang, self.audio_lang)
             newShow.loadFromIndexer()
 
             self.show = newShow

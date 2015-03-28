@@ -1272,7 +1272,7 @@ class Home(WebRoot):
                  flatten_folders=None, paused=None, directCall=False, air_by_date=None, sports=None, dvdorder=None,
                  indexerLang=None, subtitles=None, archive_firstmatch=None, rls_ignore_words=None,
                  rls_require_words=None, anime=None, blackWords=None, whiteWords=None, blacklist=None, whitelist=None,
-                 scene=None, defaultEpStatus=None):
+                 scene=None, defaultEpStatus=None,audio_lang=None):
 
         anidb_failed = False
         if show is None:
@@ -1340,7 +1340,7 @@ class Home(WebRoot):
         sports = config.checkbox_to_value(sports)
         anime = config.checkbox_to_value(anime)
         subtitles = config.checkbox_to_value(subtitles)
-
+        
         if indexerLang and indexerLang in sickbeard.indexerApi(showObj.indexer).indexer().config['valid_languages']:
             indexer_lang = indexerLang
         else:
@@ -1454,6 +1454,7 @@ class Home(WebRoot):
             showObj.anime = anime
             showObj.sports = sports
             showObj.subtitles = subtitles
+            showObj.audio_lang = audio_lang
             showObj.air_by_date = air_by_date
             showObj.default_ep_status = int(defaultEpStatus)
 
@@ -1783,6 +1784,43 @@ class Home(WebRoot):
         else:
             return self.redirect("/home/displayShow?show=" + show)
 
+    def setAudio(self, show=None, eps=None, audio_langs=None, direct=False):
+    
+        if show == None or eps == None or audio_langs == None:
+            errMsg = "You must specify a show and at least one episode"
+            if direct:
+                ui.notifications.error('Error', errMsg)
+                return json.dumps({'result': 'error'})
+            else:
+                return _genericMessage("Error", errMsg)
+
+        showObj = sickbeard.helpers.findCertainShow(sickbeard.showList, int(show))
+
+        if showObj == None:
+            return _genericMessage("Error", "Show not in show list")
+
+        try:
+            show_loc = showObj.location #@UnusedVariable
+        except exceptions.ShowDirNotFoundException:
+            return _genericMessage("Error", "Can't rename episodes when the show dir is missing.")
+
+        ep_obj_rename_list = []
+
+        for curEp in eps.split('|'):
+
+                logger.log(u"Attempting to set audio on episode "+curEp+" to "+audio_langs, logger.DEBUG)
+
+                epInfo = curEp.split('x')
+
+                epObj = showObj.getEpisode(int(epInfo[0]), int(epInfo[1]))
+
+                epObj.audio_langs = str(audio_langs)
+                epObj.saveToDB()
+        
+        if direct:
+            return json.dumps({'result': 'success'})
+        else:
+            return self.redirect("/home/displayShow?show=" + show)
 
     def testRename(self, show=None):
 
@@ -2500,7 +2538,7 @@ class HomeAddShows(Home):
     def addNewShow(self, whichSeries=None, indexerLang=None, rootDir=None, defaultStatus=None,
                    anyQualities=None, bestQualities=None, flatten_folders=None, subtitles=None,
                    fullShowPath=None, other_shows=None, skipShow=None, providedIndexer=None, anime=None,
-                   scene=None):
+                   scene=None, audio_lang=None):
         """
         Receive tvdb id, dir, and other options and create a show from them. If extra show dirs are
         provided then it forwards back to newShow, if not it goes to /home.
@@ -2587,7 +2625,7 @@ class HomeAddShows(Home):
         anime = config.checkbox_to_value(anime)
         flatten_folders = config.checkbox_to_value(flatten_folders)
         subtitles = config.checkbox_to_value(subtitles)
-
+        
         if not anyQualities:
             anyQualities = []
         if not bestQualities:
@@ -2601,7 +2639,7 @@ class HomeAddShows(Home):
         # add the show
         sickbeard.showQueueScheduler.action.addShow(indexer, indexer_id, show_dir, int(defaultStatus), newQuality,
                                                     flatten_folders, indexerLang, subtitles, anime,
-                                                    scene)
+                                                    scene, audio_lang=audio_lang)
         ui.notifications.message('Show added', 'Adding the specified show into ' + show_dir)
 
         return finishAddShow()
@@ -2674,7 +2712,7 @@ class HomeAddShows(Home):
                                                             flatten_folders=sickbeard.FLATTEN_FOLDERS_DEFAULT,
                                                             subtitles=sickbeard.SUBTITLES_DEFAULT,
                                                             anime=sickbeard.ANIME_DEFAULT,
-                                                            scene=sickbeard.SCENE_DEFAULT)
+                                                            scene=sickbeard.SCENE_DEFAULT,audio_lang=sickbeard.AUDIO_SHOW_DEFAULT)
                 num_added += 1
 
         if num_added:
@@ -3029,6 +3067,9 @@ class Manage(Home, WebRoot):
 
         air_by_date_all_same = True
         last_air_by_date = None
+        
+        lang_audio_all_same = True
+        last_lang_audio = None
 
         root_dir_list = []
 
@@ -3101,6 +3142,12 @@ class Manage(Home, WebRoot):
                     air_by_date_all_same = False
                 else:
                     last_air_by_date = curShow.air_by_date
+            
+            if lang_audio_all_same:
+                if last_lang_audio not in (None, curShow.audio_lang):
+                    lang_audio_all_same = False
+                else:
+                    last_lang_audio = curShow.audio_lang
 
         t.showList = toEdit
         t.archive_firstmatch_value = last_archive_firstmatch if archive_firstmatch_all_same else None
@@ -3113,6 +3160,7 @@ class Manage(Home, WebRoot):
         t.scene_value = last_scene if scene_all_same else None
         t.sports_value = last_sports if sports_all_same else None
         t.air_by_date_value = last_air_by_date if air_by_date_all_same else None
+        t.audio_value = last_lang_audio if lang_audio_all_same else None
         t.root_dir_list = root_dir_list
 
         return t.respond()
@@ -3120,7 +3168,7 @@ class Manage(Home, WebRoot):
 
     def massEditSubmit(self, archive_firstmatch=None, paused=None, default_ep_status=None,
                        anime=None, sports=None, scene=None, flatten_folders=None, quality_preset=False,
-                       subtitles=None, air_by_date=None, anyQualities=[], bestQualities=[], toEdit=None, *args,
+                       subtitles=None, air_by_date=None, anyQualities=[], bestQualities=[], audioLang = None, toEdit=None, *args,
                        **kwargs):
 
         dir_map = {}
@@ -3204,6 +3252,11 @@ class Manage(Home, WebRoot):
 
             if quality_preset == 'keep':
                 anyQualities, bestQualities = Quality.splitQuality(showObj.quality)
+            
+            if audioLang == 'keep':
+                new_audio_lang = showObj.audio_lang;
+            else:
+                new_audio_lang = audioLang
 
             exceptions_list = []
 
@@ -3215,6 +3268,7 @@ class Manage(Home, WebRoot):
                                        paused=new_paused, sports=new_sports,
                                        subtitles=new_subtitles, anime=new_anime,
                                        scene=new_scene, air_by_date=new_air_by_date,
+                                       audio_lang=new_audio_lang,
                                        directCall=True)
 
             if curErrors:
@@ -3600,7 +3654,7 @@ class ConfigGeneral(Config):
         sickbeard.ROOT_DIRS = rootDirString
 
     def saveAddShowDefaults(self, defaultStatus, anyQualities, bestQualities, defaultFlattenFolders, subtitles=False,
-                            anime=False, scene=False):
+                            anime=False, scene=False, audio_lang=None):
 
         if anyQualities:
             anyQualities = anyQualities.split(',')
@@ -3616,6 +3670,7 @@ class ConfigGeneral(Config):
 
         sickbeard.STATUS_DEFAULT = int(defaultStatus)
         sickbeard.QUALITY_DEFAULT = int(newQuality)
+        sickbeard.AUDIO_SHOW_DEFAULT = str(audio_lang)
 
         sickbeard.FLATTEN_FOLDERS_DEFAULT = config.checkbox_to_value(defaultFlattenFolders)
         sickbeard.SUBTITLES_DEFAULT = config.checkbox_to_value(subtitles)

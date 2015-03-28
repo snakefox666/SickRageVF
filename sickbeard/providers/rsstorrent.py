@@ -45,6 +45,8 @@ class TorrentRssProvider(generic.TorrentProvider):
         self.enabled = True
         self.ratio = None
         self.supportsBacklog = False
+        
+        self.supportsFrench = False
 
         self.search_mode = search_mode
         self.search_fallback = search_fallback

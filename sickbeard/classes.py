@@ -112,6 +112,9 @@ class SearchResult:
 
         # content
         self.content = None
+        
+        # audio languages
+        self.audio_langs = ""
 
     def __str__(self):
 

@@ -46,6 +46,8 @@ class HDTorrentsProvider(generic.TorrentProvider):
         generic.TorrentProvider.__init__(self, "HDTorrents")
 
         self.supportsBacklog = True
+        
+        self.supportsFrench = False
 
         self.enabled = False
         self._uid = None

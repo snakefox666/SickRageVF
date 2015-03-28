@@ -771,6 +771,20 @@ def create_https_certificates(ssl_cert, ssl_key):
 
     return True
 
+def getAllLanguages ():
+    """
+    Returns all show languages where an episode is wanted or unaired
+    
+    Returns: A list of all language codes
+    """
+    myDB = db.DBConnection()
+    
+    sqlLanguages = myDB.select("SELECT DISTINCT(t.audio_lang) FROM tv_shows t, tv_episodes e WHERE t.tvdb_id = e.showid AND (e.status = ? OR e.status = ?)", [common.UNAIRED,common.WANTED])
+    
+    languages = map(lambda x: str(x["audio_lang"]), sqlLanguages)
+    
+    return languages
+
 def backupVersionedFile(old_file, version):
     numTries = 0
 
