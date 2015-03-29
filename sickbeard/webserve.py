@@ -670,7 +670,7 @@ class Home(WebRoot):
             {'title': 'Manual Post-Processing', 'path': 'home/postprocess/'},
             {'title': 'Update KODI', 'path': 'home/updateKODI/', 'requires': self.haveKODI},
             {'title': 'Update Plex', 'path': 'home/updatePLEX/', 'requires': self.havePLEX},
-            {'title': 'Manage Torrents', 'path': 'manage/manageTorrents/', 'requires': self.haveTORRENT},
+            {'title': 'Manage Downloads', 'path': 'manage/manageTorrents/', 'requires': self.haveDOWN},
         ]
 
         return menu
@@ -745,10 +745,11 @@ class Home(WebRoot):
     def havePLEX(self):
         return sickbeard.USE_PLEX and sickbeard.PLEX_UPDATE_LIBRARY
 
-    def haveTORRENT(self):
+    def haveDOWN(self):
         if sickbeard.USE_TORRENTS and sickbeard.TORRENT_METHOD != 'blackhole' \
                 and (sickbeard.ENABLE_HTTPS and sickbeard.TORRENT_HOST[:5] == 'https'
-                     or not sickbeard.ENABLE_HTTPS and sickbeard.TORRENT_HOST[:5] == 'http:'):
+                     or not sickbeard.ENABLE_HTTPS and sickbeard.TORRENT_HOST[:5] == 'http:')\
+                     or (sickbeard.USE_NZBS and sickbeard.NZB_METHOD != 'blackhole'):
             return True
         else:
             return False
@@ -2738,10 +2739,11 @@ class Manage(Home, WebRoot):
             {'title': 'Manage Searches', 'path': 'manage/manageSearches/'},
             {'title': 'Episode Status Management', 'path': 'manage/episodeStatuses/'}, ]
 
-        if sickbeard.USE_TORRENTS and sickbeard.TORRENT_METHOD != 'blackhole' \
+        if (sickbeard.USE_TORRENTS and sickbeard.TORRENT_METHOD != 'blackhole' \
                 and (sickbeard.ENABLE_HTTPS and sickbeard.TORRENT_HOST[:5] == 'https'
-                     or not sickbeard.ENABLE_HTTPS and sickbeard.TORRENT_HOST[:5] == 'http:'):
-            menu.append({'title': 'Manage Torrents', 'path': 'manage/manageTorrents/'})
+                     or not sickbeard.ENABLE_HTTPS and sickbeard.TORRENT_HOST[:5] == 'http:')) \
+                     or (sickbeard.USE_NZBS and sickbeard.NZB_METHOD != 'blackhole'):
+            menu.append({'title': 'Manage Downloads', 'path': 'manage/manageTorrents/'})
 
         if sickbeard.USE_SUBTITLES:
             menu.append({'title': 'Missed Subtitle Management', 'path': 'manage/subtitleMissed/'})
@@ -3428,7 +3430,32 @@ class Manage(Home, WebRoot):
 
         if not sickbeard.TORRENT_PASSWORD == "" and not sickbeard.TORRENT_USERNAME == "":
             t.webui_url = re.sub('://', '://' + str(sickbeard.TORRENT_USERNAME) + ':' + str(sickbeard.TORRENT_PASSWORD) + '@' ,t.webui_url)
+        
+        
+        if sickbeard.NZB_METHOD == "sabnzbd":
+            if re.search('localhost', sickbeard.SAB_HOST):
 
+                if sickbeard.LOCALHOST_IP == '':
+                    t.webui_url_nzb = re.sub('localhost', helpers.get_lan_ip(), sickbeard.SAB_HOST)
+                else:
+                    t.webui_url_nzb = re.sub('localhost', sickbeard.LOCALHOST_IP, sickbeard.SAB_HOST)
+            else:
+                t.webui_url_nzb = sickbeard.SAB_HOST
+            if not sickbeard.SAB_PASSWORD == "" and not sickbeard.SAB_USERNAME == "":
+                t.webui_url_nzb = re.sub('://', '://' + str(sickbeard.SAB_USERNAME) + ':' + str(sickbeard.SAB_PASSWORD) + '@' ,t.webui_url_nzb)
+        
+        if sickbeard.NZB_METHOD == "nzbget":
+            if re.search('localhost', sickbeard.NZBGET_HOST):
+
+                if sickbeard.LOCALHOST_IP == '':
+                    t.webui_url_nzb = re.sub('localhost', helpers.get_lan_ip(), sickbeard.NZBGET_HOST)
+                else:
+                    t.webui_url_nzb = re.sub('localhost', sickbeard.LOCALHOST_IP, sickbeard.NZBGET_HOST)
+            else:
+                t.webui_url_nzb = sickbeard.NZBGET_HOST
+            if not sickbeard.NZBGET_PASSWORD == "" and not sickbeard.NZBGET_USERNAME == "":
+                t.webui_url_nzb = re.sub('://', '://' + str(sickbeard.NZBGET_USERNAME) + ':' + str(sickbeard.NZBGET_PASSWORD) + '@' ,t.webui_url_nzb)
+        
         return t.respond()
 
 
