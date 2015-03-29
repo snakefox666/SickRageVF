@@ -65,6 +65,7 @@ class PushoverNotifier:
                              "title": title.encode('utf-8'),
                              "message": msg.encode('utf-8'),
                              'timestamp': int(time.time()),
+                             'priority': sickbeard.PUSHOVER_PRIO,
                              "retry": 60,
                              "expire": 3600,
                          }), {"Content-type": "application/x-www-form-urlencoded"})
