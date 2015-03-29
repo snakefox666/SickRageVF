@@ -24,8 +24,6 @@
 
 #set $sql_statement += '(SELECT COUNT(*) FROM tv_episodes WHERE showid=tv_eps.showid AND season > 0 AND episode > 0 AND airdate > 1 AND status IN ' + $status_quality + ') AS ep_snatched, '
 #set $sql_statement += '(SELECT COUNT(*) FROM tv_episodes WHERE showid=tv_eps.showid AND season > 0 AND episode > 0 AND airdate > 1 AND status IN ' + $status_download + ') AS ep_downloaded, '
-#set $sql_statement += "(SELECT COUNT(*) FROM tv_episodes WHERE audio_langs = 'fr' AND location != '' AND season != 0 and episode != 0 AND airdate <= " + $today + ') AS fr, '
-#set $sql_statement += "(SELECT COUNT(*) FROM tv_episodes WHERE audio_langs <> 'fr' AND subtitles like '%fr%' AND location != '' AND season != 0 and episode != 0 AND airdate <= " + $today + ') AS subfr, '
 
 #set $sql_statement += '(SELECT COUNT(*) FROM tv_episodes WHERE showid=tv_eps.showid AND season > 0 AND episode > 0 AND airdate > 1 '
 #set $sql_statement += ' AND ((airdate <= ' + $today + ' AND (status = ' + str($SKIPPED) + ' OR status = ' + str($WANTED) + ' OR status = ' + str($FAILED) + ')) '
@@ -379,6 +377,7 @@ $myShowList.sort(lambda x, y: cmp(x.name, y.name))
 		<div class="show-image">
 			<a href="$sbRoot/home/displayShow?show=$curShow.indexerid"><img alt="" class="show-image" src="$sbRoot/showPoster/?show=$curShow.indexerid&amp;which=poster_thumb" /></a>
 		</div>
+		
 		<div id="progressbar$curShow.indexerid"></div>
 			<script type="text/javascript">
 			<!--
@@ -409,6 +408,7 @@ $myShowList.sort(lambda x, y: cmp(x.name, y.name))
 		<div class="show-title">
 			$curShow.name&nbsp;&nbsp;&nbsp; <img src="$sbRoot/images/flags/${curShow.audio_lang}.png" width="18" height="12" alt="$curShow.audio_lang" title="$curShow.audio_lang" />
 		</div>
+
 		<div class="show-date">
 #if $cur_airs_next
     #set $ldatetime = $sbdatetime.sbdatetime.convert_to_setting($network_timezones.parse_date_time($cur_airs_next,$curShow.airs,$curShow.network))

@@ -3714,7 +3714,7 @@ class ConfigGeneral(Config):
                     web_password=None, version_notify=None, enable_https=None, https_cert=None, https_key=None,
                     handle_reverse_proxy=None, sort_article=None, auto_update=None, notify_on_update=None,
                     proxy_setting=None, proxy_indexers=None, anon_redirect=None, git_path=None, git_remote=None,
-                    calendar_unprotected=None, no_restart=None,
+                    calendar_unprotected=None, debug=None, no_restart=None,
                     display_filesize=None, fuzzy_dating=None, trim_zero=None, date_preset=None, date_preset_na=None, time_preset=None,
                     indexer_timeout=None, download_url=None, rootDir=None, theme_name=None,
                     git_reset=None, git_username=None, git_password=None, git_autoissues=None):
@@ -3725,6 +3725,21 @@ class ConfigGeneral(Config):
         sickbeard.DOWNLOAD_URL = download_url
         sickbeard.INDEXER_DEFAULT_LANGUAGE = indexerDefaultLang
         sickbeard.LAUNCH_BROWSER = config.checkbox_to_value(launch_browser)
+        if sickbeard.SHOWUPDATE_HOUR != config.to_int(showupdate_hour):
+            sickbeard.showUpdateScheduler.stop.set()
+            logger.log(u"Waiting for the SHOWUPDATER thread to exit so we can set new start hour")
+            try:
+                sickbeard.showUpdateScheduler.join(10) # Wait 10 sec for the thread to exit
+            except:
+                pass
+            if  sickbeard.showUpdateScheduler.isAlive():
+                logger.log(u"Unable to stop SHOWUPDATER thread, the new configuration will be applied after a restart", logger.WARNING)
+            else:
+                logger.log(u"Starting SHOWUPDATER thread with the new start hour: " + str(config.to_int(showupdate_hour)))
+                sickbeard.showUpdateScheduler = scheduler.Scheduler(showUpdater.ShowUpdater(),
+                                              cycleTime=datetime.timedelta(hours=1),
+                                              threadName="SHOWUPDATER",
+                                              start_time=datetime.time(hour=config.to_int(showupdate_hour)))            
         sickbeard.SHOWUPDATE_HOUR = config.to_int(showupdate_hour)
         config.change_VERSION_NOTIFY(config.checkbox_to_value(version_notify))
         sickbeard.AUTO_UPDATE = config.checkbox_to_value(auto_update)
@@ -3751,12 +3766,16 @@ class ConfigGeneral(Config):
         sickbeard.GIT_REMOTE = git_remote
         sickbeard.CALENDAR_UNPROTECTED = config.checkbox_to_value(calendar_unprotected)
         sickbeard.NO_RESTART = config.checkbox_to_value(no_restart)
+        sickbeard.DEBUG = config.checkbox_to_value(debug)
         # sickbeard.LOG_DIR is set in config.change_LOG_DIR()
 
         sickbeard.WEB_PORT = config.to_int(web_port)
         sickbeard.WEB_IPV6 = config.checkbox_to_value(web_ipv6)
         # sickbeard.WEB_LOG is set in config.change_LOG_DIR()
-        sickbeard.ENCRYPTION_VERSION = config.checkbox_to_value(encryption_version)
+        if config.checkbox_to_value(encryption_version) == 1:
+            sickbeard.ENCRYPTION_VERSION = 2
+        else:
+            sickbeard.ENCRYPTION_VERSION = 0
         sickbeard.WEB_USERNAME = web_username
         sickbeard.WEB_PASSWORD = web_password
 
@@ -5032,6 +5051,8 @@ class ErrorLogs(WebRoot):
                 if match:
                     level = match.group(7)
                     logName = match.group(8)
+                    if not sickbeard.DEBUG and (level == 'DEBUG' or level == 'DB'):
+                        continue
                     if level not in logger.reverseNames:
                         lastLine = False
                         continue
