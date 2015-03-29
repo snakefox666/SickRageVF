@@ -53,7 +53,7 @@ class OldPirateBayProvider(generic.TorrentProvider):
 
         self.supportsBacklog = True
         
-        self.supportsFrench = False
+        self.supportsFrench = True
 
         self.enabled = False
         self.ratio = None
@@ -177,45 +177,58 @@ class OldPirateBayProvider(generic.TorrentProvider):
 
     def _get_season_search_strings(self, ep_obj):
 
-        search_string = {'Season': []}
+        search_string = {'Season': [], 'Langcat' : ''}
+        
+        if ep_obj.show.audio_lang=='fr':
+            langtext=' french'
+        else:
+            langtext=''
+            
         for show_name in set(allPossibleShowNames(self.show)):
             if ep_obj.show.air_by_date or ep_obj.show.sports:
                 ep_string = show_name + ' ' + str(ep_obj.airdate).split('-')[0]
                 search_string['Season'].append(ep_string)
-                ep_string = show_name + ' Season ' + str(ep_obj.airdate).split('-')[0]
+                ep_string = show_name + ' Season ' + str(ep_obj.airdate).split('-')[0]+langtext
                 search_string['Season'].append(ep_string)
             elif ep_obj.show.anime:
-                ep_string = show_name + ' ' + "%02d" % ep_obj.scene_absolute_number
+                ep_string = show_name + ' ' + "%02d" % ep_obj.scene_absolute_number+langtext
                 search_string['Season'].append(ep_string)
             else:
                 ep_string = show_name + ' S%02d' % int(ep_obj.scene_season)
                 search_string['Season'].append(ep_string)
-                ep_string = show_name + ' Season ' + str(ep_obj.scene_season) + ' -Ep*'
+                ep_string = show_name + ' Season ' + str(ep_obj.scene_season) + ' -Ep*'+langtext
                 search_string['Season'].append(ep_string)
 
             search_string['Season'].append(ep_string)
+            
+        search_string['Langcat']=ep_obj.show.audio_lang
 
         return [search_string]
 
     def _get_episode_search_strings(self, ep_obj, add_string=''):
 
-        search_string = {'Episode': []}
+        search_string = {'Episode': [],'Langcat': ''}
+        
+        if ep_obj.show.audio_lang=='fr':
+            langtext=' french'
+        else:
+            langtext=''
 
         if self.show.air_by_date:
             for show_name in set(allPossibleShowNames(self.show)):
                 ep_string = sanitizeSceneName(show_name) + ' ' + \
-                            str(ep_obj.airdate).replace('-', ' ')
+                            str(ep_obj.airdate).replace('-', ' ')+langtext
                 search_string['Episode'].append(ep_string)
         elif self.show.sports:
             for show_name in set(allPossibleShowNames(self.show)):
                 ep_string = sanitizeSceneName(show_name) + ' ' + \
                             str(ep_obj.airdate).replace('-', '|') + '|' + \
-                            ep_obj.airdate.strftime('%b')
+                            ep_obj.airdate.strftime('%b')+langtext
                 search_string['Episode'].append(ep_string)
         elif self.show.anime:
             for show_name in set(allPossibleShowNames(self.show)):
                 ep_string = sanitizeSceneName(show_name) + ' ' + \
-                            "%02i" % int(ep_obj.scene_absolute_number)
+                            "%02i" % int(ep_obj.scene_absolute_number)+langtext
                 search_string['Episode'].append(ep_string)
         else:
             for show_name in set(allPossibleShowNames(self.show)):
@@ -223,17 +236,24 @@ class OldPirateBayProvider(generic.TorrentProvider):
                             sickbeard.config.naming_ep_type[2] % {'seasonnumber': ep_obj.scene_season,
                                                                   'episodenumber': ep_obj.scene_episode} + '|' + \
                             sickbeard.config.naming_ep_type[0] % {'seasonnumber': ep_obj.scene_season,
-                                                                  'episodenumber': ep_obj.scene_episode} + ' %s' % add_string
+                                                                  'episodenumber': ep_obj.scene_episode} + ' %s' % add_string+langtext
                 search_string['Episode'].append(re.sub('\s+', ' ', ep_string))
 
+        search_string['Langcat']=ep_obj.show.audio_lang
+        
         return [search_string]
 
     def _doSearch(self, search_params, search_mode='eponly', epcount=0, age=0):
 
         results = []
+        langcat=search_params['Langcat']
         items = {'Season': [], 'Episode': [], 'RSS': []}
 
         for mode in search_params.keys():
+            
+            if mode=='Langcat':
+                continue
+            
             for search_string in search_params[mode]:
                 if isinstance(search_string, unicode):
                     search_string = unidecode(search_string)
@@ -278,8 +298,11 @@ class OldPirateBayProvider(generic.TorrentProvider):
 
                     if not title or not url:
                         continue
+                    
+                    if langcat=='fr' and 'french' not in title.lower():
+                        continue
 
-                    item = title, url, id, seeders, leechers
+                    item = title, url, id, seeders, leechers, langcat
 
                     items[mode].append(item)
 
@@ -292,7 +315,7 @@ class OldPirateBayProvider(generic.TorrentProvider):
 
     def _get_title_and_url(self, item):
 
-        title, url, id, seeders, leechers = item
+        title, url, id, seeders, leechers, lang = item
 
         if title:
             title = u'' + title.replace(' ', '.')
@@ -300,7 +323,7 @@ class OldPirateBayProvider(generic.TorrentProvider):
         if url:
             url = url.replace('&amp;', '&')
 
-        return (title, url)
+        return (title, url, lang)
 
     def findPropers(self, search_date=datetime.datetime.today()):
 
@@ -345,7 +368,7 @@ class OldPirateBayCache(tvcache.TVCache):
         self.minTime = 20
 
     def _getRSSData(self):
-        search_params = {'RSS': ['rss']}
+        search_params = {'RSS': ['rss'],'Langcat' : ""}
         return {'entries': self.provider._doSearch(search_params)}
 
 provider = OldPirateBayProvider()

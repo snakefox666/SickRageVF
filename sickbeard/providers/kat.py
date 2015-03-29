@@ -281,6 +281,9 @@ class KATProvider(generic.TorrentProvider):
 
                         if not title or not url:
                             continue
+                        
+                        if langcat=='fr' and 'french' not in title.lower():
+                            continue
 
                         try:
                             pubdate = datetime.datetime(*item['published_parsed'][0:6])
