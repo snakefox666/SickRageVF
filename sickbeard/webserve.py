@@ -4995,7 +4995,6 @@ class ErrorLogs(WebRoot):
     def ErrorLogsMenu(self):
         menu = [
             {'title': 'Clear Errors', 'path': 'errorlogs/clearerrors/'},
-            {'title': 'Submit Errors', 'path': 'errorlogs/submit_errors/', 'requires': self.haveErrors},
         ]
 
         return menu
