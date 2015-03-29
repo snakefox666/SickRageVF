@@ -111,7 +111,7 @@
 				\$("#SubMenu a[href$='/home/addShows/']").addClass('btn').html('<span class="ui-icon ui-icon-video pull-left"></span> Add Show');
 				\$("#SubMenu a:contains('Processing')").addClass('btn').html('<span class="ui-icon ui-icon-folder-open pull-left"></span> Post-Processing');
 				\$("#SubMenu a:contains('Manage Searches')").addClass('btn').html('<span class="ui-icon ui-icon-search pull-left"></span> Manage Searches');
-				\$("#SubMenu a:contains('Manage Torrents')").addClass('btn').html('<span class="submenu-icon-bittorrent pull-left"></span> Manage Torrents');
+				\$("#SubMenu a:contains('Manage Downloads')").addClass('btn').html('<span class="submenu-icon-bittorrent pull-left"></span> Manage Downloads');
 				\$("#SubMenu a[href$='/manage/failedDownloads/']").addClass('btn').html('<span class="submenu-icon-failed-download pull-left"></span> Failed Downloads');
 				\$("#SubMenu a:contains('Notification')").addClass('btn').html('<span class="ui-icon ui-icon-note pull-left"></span> Notifications');
 				\$("#SubMenu a:contains('Update show in KODI')").addClass('btn').html('<span class="submenu-icon-kodi pull-left"></span> Update show in KODI');
@@ -179,10 +179,10 @@
 							#if $sickbeard.USE_KODI and $sickbeard.KODI_HOST != "":
 								<li><a href="$sbRoot/home/updateKODI/"><i class="menu-icon-kodi"></i>&nbsp;Update KODI</a></li>
 							#end if	
-							#if $sickbeard.USE_TORRENTS and $sickbeard.TORRENT_METHOD != 'blackhole' \
+							#if ($sickbeard.USE_TORRENTS and $sickbeard.TORRENT_METHOD != 'blackhole' \
 							and ($sickbeard.ENABLE_HTTPS and $sickbeard.TORRENT_HOST[:5] == 'https' \
-							or not $sickbeard.ENABLE_HTTPS and $sickbeard.TORRENT_HOST[:5] == 'http:'):                            
-								<li><a href="$sbRoot/manage/manageTorrents/"><i class="menu-icon-bittorrent"></i>&nbsp;Manage Torrents</a></li>
+							or not $sickbeard.ENABLE_HTTPS and $sickbeard.TORRENT_HOST[:5] == 'http:')) or (sickbeard.USE_NZBS and sickbeard.NZB_METHOD != 'blackhole'):                            
+								<li><a href="$sbRoot/manage/manageTorrents/"><i class="menu-icon-bittorrent"></i>&nbsp;Manage Downloads</a></li>
 							#end if
 							#if $sickbeard.USE_FAILED_DOWNLOADS:
 								<li><a href="$sbRoot/manage/failedDownloads/"><i class="menu-icon-failed-download"></i>&nbsp;Failed Downloads</a></li>
